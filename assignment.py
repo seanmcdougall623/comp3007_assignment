@@ -1,5 +1,3 @@
-
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -16,14 +14,15 @@
 # Author: [Your Name]
 # Last Modified: 2024-09-09
 
-import sys
 import os
+import sys
 
 # Importing the individual tasks
 from task1 import run_task1
 from task2 import run_task2
 from task3 import run_task3
 from task4 import run_task4
+
 
 # Function to read the config file
 def read_config(config_path):
@@ -32,19 +31,25 @@ def read_config(config_path):
         print(f"Error: Config file {config_path} not found.")
         return config
 
-    with open(config_path, 'r') as file:
+    with open(config_path, "r") as file:
         for line in file:
-            if line.strip() and not line.startswith('#'):
-                key, value = line.split(':')
+            if line.strip() and not line.startswith("#"):
+                key, value = line.split(":")
                 config[key.strip()] = value.strip()
     return config
+
 
 def print_usage():
     print("Usage: assignment.py <task> <image_path> [config_path]")
     print("Example:")
     print("  python assignment.py task1 /mnt/data/comp3007/assignment2024/task1")
-    print("  Optional config file path (default: config.txt) in the same directory as assignment.py")
-    print("  python assignment.py task1 /mnt/data/comp3007/assignment2024/task1 ./config.txt")
+    print(
+        "  Optional config file path (default: config.txt) in the same directory as assignment.py"
+    )
+    print(
+        "  python assignment.py task1 /mnt/data/comp3007/assignment2024/task1 ./config.txt"
+    )
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
@@ -54,7 +59,7 @@ if __name__ == "__main__":
 
     task = sys.argv[1]
     image_path = sys.argv[2]
-    config_path = sys.argv[3] if len(sys.argv) > 3 else 'config.txt'
+    config_path = sys.argv[3] if len(sys.argv) > 3 else "config.txt"
 
     config = read_config(config_path)
     if not config:
@@ -70,7 +75,9 @@ if __name__ == "__main__":
         elif task == "task4":
             run_task4(image_path, config)
         else:
-            print(f"Unknown task: {task}. Please specify task1, task2, task3, or task4.")
+            print(
+                f"Unknown task: {task}. Please specify task1, task2, task3, or task4."
+            )
             print_usage()
             sys.exit(1)
     except Exception as e:
