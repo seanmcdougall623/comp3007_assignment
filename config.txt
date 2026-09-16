@@ -1,8 +1,8 @@
 
 # Student Information
-Surname: Trump
-GivenNames: Donald
-StudentID: 12345678
+Surname: McDougall
+GivenNames: Sean
+StudentID: 21495140
 
 # Hyperparameters
 learning_rate: 0.001

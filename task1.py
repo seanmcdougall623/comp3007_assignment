@@ -17,9 +17,8 @@
 import os
 
 import cv2
-from matplotlib.pyplot import gray
-from networkx import edges
-from sympy import sift
+
+from lib.utils import preprocess_image
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -35,15 +34,6 @@ def save_output(output_path, content, output_type="txt"):
         print(f"Image saved at: {output_path}")
     else:
         print("Unsupported output type. Use 'txt' or 'image'.")
-
-
-# convert and filter out noise
-def preprocess_image(img):
-    resized = cv2.resize(img, (600, 480), interpolation=cv2.INTER_LINEAR)
-    grayed = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(grayed, (5, 5), 0)
-
-    return blur
 
 
 def extract_thermo(img):
