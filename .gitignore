@@ -5,3 +5,4 @@ lib/__pycache__/
 yolov8n.pt
 datasets
 runs
+wandb
