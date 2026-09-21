@@ -21,7 +21,7 @@ def train_model(dataset_path, output_dir, epochs=100, m_type="obb"):
         data=os.getcwd() + dataset_path,
         epochs=epochs,
         imgsz=640,
-        batch=16,
+        batch=8,
         device=0,
     )
 
@@ -35,7 +35,7 @@ def train_model(dataset_path, output_dir, epochs=100, m_type="obb"):
 
 
 def train_bp_therm():
-    train_model("/dataset/task1/data.yaml", "bp_therm_ident.pt")
+    train_model("/datasets/task1/data.yaml", "bp_therm_ident.pt")
 
 
 def train_digit():
@@ -43,4 +43,4 @@ def train_digit():
 
 
 if __name__ == "__main__":
-    train_model()
+    train_digit()
