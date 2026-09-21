@@ -6,4 +6,4 @@ yolov8n.pt
 datasets
 runs
 wandb
-*.pt
+/*.pt
