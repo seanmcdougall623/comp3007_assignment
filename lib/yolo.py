@@ -47,7 +47,12 @@ def train_bp_therm():
 
 def train_digit():
     train_model(
-        "/datasets/task3", "digit_cls.pt", epochs=10, m_type="cls", imgsz=100
+        "/datasets/task3",
+        "digit_cls.pt",
+        epochs=100,
+        m_type="cls",
+        imgsz=100,
+        batch=32,
     )
 
 
