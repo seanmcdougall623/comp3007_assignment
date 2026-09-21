@@ -35,7 +35,9 @@ def find_lcd_digits(img, draw=False):
     kernel = np.ones((7, 7), np.uint8)
     img_dil = cv2.dilate(img_edges, kernel, iterations=1)
 
-    contours, _ = cv2.findContours(img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     ref_cnt = []
 
@@ -147,4 +149,4 @@ def run_task2(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task2("./data/task2/thermo2.png", None)
+    run_task2("./data/task2/thermo1.png", None)

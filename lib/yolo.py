@@ -8,7 +8,7 @@ import shutil
 
 
 def train_model(epochs=100):
-    model = YOLO("yolov8n.pt")
+    model = YOLO("yolov8n-obb.pt")
 
     results = model.train(
         data=os.getcwd() + "/datasets/task1/data.yaml",

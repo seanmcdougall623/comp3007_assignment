@@ -11,8 +11,8 @@ def load_model():
     project = rf.workspace("sean-mcdougall").project(
         "bp-therm-identification"
     )
-    project.version(2).download(
-        "yolov8", location="./datasets/task1", overwrite=True
+    project.version(4).download(
+        "yolov8-obb", location="./datasets/task1", overwrite=True
     )
 
 
