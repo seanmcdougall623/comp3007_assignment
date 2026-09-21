@@ -17,63 +17,42 @@
 import os
 
 import cv2
+import numpy as np
+from ultralytics import YOLO
 
-DIGITS_LOOKUP = {
-    (1, 1, 1, 0, 1, 1, 1): 0,
-    (0, 0, 1, 0, 0, 1, 0): 1,
-    (1, 0, 1, 1, 1, 1, 0): 2,
-    (1, 0, 1, 1, 0, 1, 1): 3,
-    (0, 1, 1, 1, 0, 1, 0): 4,
-    (1, 1, 0, 1, 0, 1, 1): 5,
-    (1, 1, 0, 1, 1, 1, 1): 6,
-    (1, 0, 1, 0, 0, 1, 0): 7,
-    (1, 1, 1, 1, 1, 1, 1): 8,
-    (1, 1, 1, 1, 0, 1, 1): 9,
-}
+from lib.utils import get_digit_num_manual
 
 
-# inspired by https://pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
-# rather than doing some fancy model we can instead iterate a segment over our segment display
-# if the segment is 'on' then record it, otherwise don't
-# use a predefined lookup table to work out which on segments correspond to which digit
 def get_digit_num(img_path):
-    # make image b/w
+    # load image and threshold to b/w as thats what model was trained on
     b_w = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-    # threshold it
-    digit = cv2.threshold(b_w, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    digit = cv2.threshold(b_w, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    # tiny filtering step
+    kernel = np.ones((1, 1), np.uint8)
+    mask = cv2.morphologyEx(digit, cv2.MORPH_OPEN, kernel)
 
-    # number 1 digit will only have 2 segments - computation will fail
-    # just count number of countours and if we only have two its probs a 1
-    num_cnts, _ = cv2.findContours(digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # pad out any dimension < 100 to 100 so it doesnt do any goofy stretching
+    h, w = mask.shape
+    if h < 100 or w < 100:
+        pad_h = max(0, 100 - h)
+        pad_w = max(0, 100 - w)
+        mask = cv2.copyMakeBorder(
+            mask, pad_h, 0, pad_w, 0, cv2.BORDER_CONSTANT, value=255
+        )
 
-    if len(num_cnts) == 2:
-        return 1
+    img_fin = cv2.resize(mask, (100, 100), cv2.INTER_AREA)
 
-    # precomputed width and height of segments
-    h, w = digit.shape
-    dW, dH = (int(w * 0.25), int(h * 0.15))
-    dHC = int(h * 0.05)
+    model = YOLO("./models/digit_cls.pt")
 
-    segments = [
-        ((0, 0), (w, dH)),  # top
-        ((0, 0), (dW, h // 2)),  # top-left
-        ((w - dW, 0), (w, h // 2)),  # top-right
-        ((0, (h // 2) - dHC), (w, (h // 2) + dHC)),  # center
-        ((0, h // 2), (dW, h)),  # bottom-left
-        ((w - dW, h // 2), (w, h)),  # bottom-right
-        ((0, h - dH), (w, h)),  # bottom
-    ]
-    on = [0] * len(segments)
+    result = model.predict(img_fin)[0]
 
-    for i, ((xA, yA), (xB, yB)) in enumerate(segments):
-        segROI = digit[yA:yB, xA:xB]
-        total = cv2.countNonZero(segROI)
-        area = (xB - xA) * (yB - yA)
-        if total / float(area) > 0.5:
-            on[i] = 1
-
-    digit = DIGITS_LOOKUP[tuple(on)]
-    return digit
+    confidence = result.probs.top1conf
+    if confidence < 0.8:
+        # method expects inverted
+        digit = cv2.threshold(b_w, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        return get_digit_num_manual(digit)
+    else:
+        return int(result.probs.top1)
 
 
 # template match to find the nearest digits
@@ -122,11 +101,11 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task3(image_path, config):
     # TODO: Implement task 3 here
-    img = cv2.imread(image_path)
-    get_nearest_therm_digits(img)
+    digit = get_digit_num(image_path)
+    print(digit)
     output_path = f"output/task3/result.txt"
     save_output(output_path, "Task 3 output", output_type="txt")
 
 
 if __name__ == "__main__":
-    run_task3("data/task3/thermo1/t.png", None)
+    run_task3("data/task3/lcd2/d4.png", None)
