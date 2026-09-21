@@ -105,8 +105,8 @@ def find_thermo_section(img):
 
     # use hough transform to find da lines
 
-    top_point = (x + w // 2, y)
-    half_height = int(img_h * 0.07)
+    top_point = (x + w // 2, y + int(img_h * 0.015))
+    half_height = int(img_h * 0.06)
     y0 = max(0, top_point[1] - half_height)
     y1 = min(img_h, top_point[1] + half_height)
     box = (0, y0, img_w, y1 - y0)
@@ -147,4 +147,4 @@ def run_task2(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task2("./data/task2/thermo2.png", None)
+    run_task2("./data/task2/thermo1.png", None)
