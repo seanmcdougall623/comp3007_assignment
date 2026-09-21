@@ -17,16 +17,21 @@ def get_rb_dataset():
 
 def get_digit_dataset():
     path = kagglehub.dataset_download(
-        "cramatsu/7-segment-display-yolov8",
+        "jakubfrydrych/digits-segment-display",
         output_dir="./datasets/task3",
+        force_download=True,
     )
+    print("Cleaning up download...")
+    # remove unnecessary dataset
+    shutil.rmtree(path + "/datasets")
     # kagglehub does smthing weird with file structure (stupid)
-    folder = Path(path + "/segment_indigator.v4i.yolov8")
+    folder = Path(path + "/dataset/dataset")
     for item in folder.iterdir():
-        destination = folder.parent / item.name
+        destination = folder.parent.parent / item.name
         shutil.move(str(item), str(destination))
 
     os.rmdir(folder)
+    os.rmdir(folder.parent)
 
 
 def load_datasets():

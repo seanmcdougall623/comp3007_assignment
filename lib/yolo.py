@@ -39,7 +39,7 @@ def train_bp_therm():
 
 
 def train_digit():
-    train_model("/dataset/task3/data.yaml", "digit_cls.pt", m_type="cls")
+    train_model("/dataset/task3", "digit_cls.pt", m_type="cls")
 
 
 if __name__ == "__main__":
