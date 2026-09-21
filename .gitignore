@@ -1,3 +1,8 @@
 __pycache__
 /output/**/
 lib/__pycache__/
+.env
+yolov8n.pt
+datasets
+runs
+wandb
