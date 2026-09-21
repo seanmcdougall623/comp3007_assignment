@@ -7,7 +7,9 @@ import shutil
 from ultralytics import YOLO
 
 
-def train_model(dataset_path, output_dir, epochs=100, m_type="obb"):
+def train_model(
+    dataset_path, output_dir, epochs=100, m_type="obb", imgsz=640, batch=16
+):
     if m_type == "obb":
         model = YOLO("yolov8n-obb.pt")
     elif m_type == "normal":
@@ -15,13 +17,15 @@ def train_model(dataset_path, output_dir, epochs=100, m_type="obb"):
     elif m_type == "cls":
         model = YOLO("yolov8n-cls.pt")
     else:
-        raise AssertionError("Please specify either 'obb' or 'normal' or 'cls'")
+        raise AssertionError(
+            "Please specify either 'obb' or 'normal' or 'cls'"
+        )
 
     results = model.train(
         data=os.getcwd() + dataset_path,
         epochs=epochs,
-        imgsz=640,
-        batch=8,
+        imgsz=imgsz,
+        batch=batch,
         device=0,
     )
 
@@ -29,7 +33,10 @@ def train_model(dataset_path, output_dir, epochs=100, m_type="obb"):
     # if statement more just to supress intellisense error
     if results:
         shutil.move(
-            str(os.getcwd()) + "/" + str(results.save_dir) + "/weights/best.pt",
+            str(os.getcwd())
+            + "/"
+            + str(results.save_dir)
+            + "/weights/best.pt",
             str(os.getcwd()) + "/models" + "/" + output_dir,
         )
 
@@ -39,7 +46,9 @@ def train_bp_therm():
 
 
 def train_digit():
-    train_model("/dataset/task3", "digit_cls.pt", m_type="cls")
+    train_model(
+        "/datasets/task3", "digit_cls.pt", epochs=10, m_type="cls", imgsz=100
+    )
 
 
 if __name__ == "__main__":
