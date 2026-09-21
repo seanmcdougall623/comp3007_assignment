@@ -47,8 +47,7 @@ def get_digit_num(img_path):
     num_cnts, _ = cv2.findContours(digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if len(num_cnts) == 2:
-        print(1)
-        return
+        return 1
 
     # precomputed width and height of segments
     h, w = digit.shape
@@ -74,13 +73,34 @@ def get_digit_num(img_path):
             on[i] = 1
 
     digit = DIGITS_LOOKUP[tuple(on)]
-    print(digit)
+    return digit
 
 
-def get_nearest_therm_digit(img):
-    pass
+# template match to find the nearest digits
+# @param img must be grayscale
+def get_nearest_therm_digits(img):
+    b_w = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    base_path = str(os.getcwd()) + "/lib/therm_digits/"
+    # stupid lazy way to iterate through each template
+    for i in range(-2, 6):
+        template = cv2.imread(base_path + f"{i}.png", cv2.IMREAD_GRAYSCALE)
+        h, w = template.shape
+
+        # see if we have the value in our image
+        # confidence needs to be >80%
+        res = cv2.matchTemplate(b_w, template, cv2.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        print(f"{i}: Max val: {max_val} @ {max_loc}")
+        bottom_right = (max_loc[0] + w, max_loc[1] + h)
+        cv2.rectangle(img, max_loc, bottom_right, i + 120, 2)
+
+    cv2.imshow("output", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
+# take top and bottom value, then ranging will be fixed
+# mercury value will just be fixed spacing and we can calculate from there
 def get_therm_reading(img):
     pass
 
@@ -102,10 +122,11 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task3(image_path, config):
     # TODO: Implement task 3 here
-    get_digit_num(image_path)
+    img = cv2.imread(image_path)
+    get_nearest_therm_digits(img)
     output_path = f"output/task3/result.txt"
     save_output(output_path, "Task 3 output", output_type="txt")
 
 
 if __name__ == "__main__":
-    run_task3("data/task3/lcd2/d1.png", None)
+    run_task3("data/task3/thermo1/t.png", None)
