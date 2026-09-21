@@ -14,13 +14,13 @@
 # Author: [Your Name]
 # Last Modified: 2024-09-09
 
+import math
 import os
 
 import cv2
 import numpy as np
-import math
 
-from lib.utils import preprocess_image
+from lib.utils import extract_red, preprocess_image
 
 
 def find_lcd_digits(img, draw=False):
@@ -35,9 +35,7 @@ def find_lcd_digits(img, draw=False):
     kernel = np.ones((7, 7), np.uint8)
     img_dil = cv2.dilate(img_edges, kernel, iterations=1)
 
-    contours, _ = cv2.findContours(
-        img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
+    contours, _ = cv2.findContours(img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     ref_cnt = []
 
@@ -82,30 +80,7 @@ def find_thermo_section(img):
     # approach is to look for red line as thats only thing consistent
     # line is too skinny to do any line/edge detection
 
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    # !!!
-    # TODO: REFERENCE: AI GENERATED
-    # !!!
-    lower = np.array([5, 55, 90])
-    upper = np.array([25, 255, 200])
-    # ai stuff ends
-
-    red_mask = cv2.inRange(img_hsv, lower, upper)
-    # use morphological filter to filter out noise
-    kernel = np.ones((2, 2), np.uint8)
-    mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
-
-    # work out where largest blob is and grab it
-    _, _, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
-    largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-
-    # grab coords of where the box is
-    x, y, w, h, _ = stats[largest]
-
-    # now that we know the x/y coords of where the mercury goes to, we just need to find our closest 'big' lines
-
-    # use hough transform to find da lines
+    x, y, w, _ = extract_red(img)
 
     top_point = (x + w // 2, y + int(img_h * 0.015))
     half_height = int(img_h * 0.06)
