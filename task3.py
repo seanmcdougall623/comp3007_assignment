@@ -92,11 +92,9 @@ def get_therm_reading(img):
     # calculate px spacing
     # 1u = 0.5 degrees
     px_spacing = abs(y1 - y2) // 10
-    print(y1, y2, px_spacing, merc_y, d1, d2)
 
     # calculate mercury reading
     # offset by midpoint of first reading (where the closest known value starts)
-    print((y2 + h2 // 2) - merc_y)
     merc_reading = ((y2 + h2 // 2) - merc_y) / px_spacing
 
     # add in temp offset
