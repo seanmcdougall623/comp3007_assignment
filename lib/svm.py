@@ -25,10 +25,11 @@ def load_image(img, size, loaded=False):
 
     # resize to reduce feature length
     img = resize(img, size)
-
+    blur = cv2.GaussianBlur(img, (3, 3), 0)
     # threshold just to remove the segment noise or any light pollution
-    digit = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-
+    digit = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[
+        1
+    ]
     return digit
 
 

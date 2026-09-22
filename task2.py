@@ -14,13 +14,11 @@
 # Author: [Your Name]
 # Last Modified: 2024-09-09
 
-import math
 import os
 
 import cv2
-import numpy as np
 
-from lib.utils import extract_red, preprocess_image
+from lib.utils import extract_digits, extract_red, preprocess_image
 
 
 def find_lcd_digits(img, draw=False):
@@ -28,35 +26,7 @@ def find_lcd_digits(img, draw=False):
     img = cv2.imread(img)
     pre_img = preprocess_image(img, resize=False)
 
-    # thresholding
-    img_edges = cv2.Canny(pre_img, threshold1=5, threshold2=120)
-
-    # dilate the threshold a little to connect the segments
-    kernel = np.ones((7, 7), np.uint8)
-    img_dil = cv2.dilate(img_edges, kernel, iterations=1)
-
-    contours, _ = cv2.findContours(img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    ref_cnt = []
-
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
-        area = w * h
-        # check if sufficiently big, and rectangular shape
-        if area > 2000 and (w * 1.3 < h):
-            # if we want to draw use direct contour approximation
-            if draw:
-                ref_cnt.append(
-                    np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
-                )
-            else:
-                # much more computational efficent
-                ref_cnt.append((x, y, w, h))
-
-    # sort based on pixel position
-    # take into account both x and y
-    # idk probably not efficient but shld be fine
-    ref_cnt = sorted(ref_cnt, key=lambda r: math.sqrt(r[0] ** 2 + r[1] ** 2))
+    ref_cnt = extract_digits(pre_img, draw=draw)
 
     # only draw if we wanna see the output
     if draw:
@@ -82,7 +52,7 @@ def find_thermo_section(img):
 
     x, y, w, _ = extract_red(img)
 
-    top_point = (x + w // 2, y + int(img_h * 0.015))
+    top_point = (x + w // 2, y + int(img_h * 0.03))
     half_height = int(img_h * 0.06)
     y0 = max(0, top_point[1] - half_height)
     y1 = min(img_h, top_point[1] + half_height)

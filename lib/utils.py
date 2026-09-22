@@ -88,7 +88,7 @@ def extract_digits(
 # used to computer thermometer info
 # @param loaded_img must be already loaded opencv2 img
 def extract_red(loaded_img):
-    img_hsv = cv2.cvtColor(loaded_img)
+    img_hsv = cv2.cvtColor(loaded_img, cv2.COLOR_BGR2HSV)
 
     # !!!
     # TODO: REFERENCE: AI GENERATED
@@ -96,8 +96,8 @@ def extract_red(loaded_img):
     lower = np.array([5, 55, 90])
     upper = np.array([25, 255, 200])
     # ai stuff ends
-
-    red_mask = cv2.inRange(img_hsv, lower, upper)
+    blur = cv2.GaussianBlur(img_hsv, (3, 3), 0)
+    red_mask = cv2.inRange(blur, lower, upper)
     # use morphological filter to filter out noise
     kernel = np.ones((2, 2), np.uint8)
     mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
