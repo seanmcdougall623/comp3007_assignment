@@ -18,17 +18,20 @@ import os
 
 import cv2
 
-from lib.svm import test_digit
+from lib.svm import test_bp_digit, test_therm_digit
 
 
 def get_digit_num(img_path):
-    return test_digit(img_path)
+    return test_bp_digit(img_path)
 
 
 # template match to find the nearest digits
 # @param img must be grayscale
 def get_nearest_therm_digits(img):
     b_w = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # crop down to left hand third of image so we only get the digits
+    third_img = b_w[:, : b_w.shape[1] // 3]
+
     base_path = str(os.getcwd()) + "/lib/therm_digits/"
     # stupid lazy way to iterate through each template
     for i in range(-2, 6):
@@ -37,7 +40,7 @@ def get_nearest_therm_digits(img):
 
         # see if we have the value in our image
         # confidence needs to be >80%
-        res = cv2.matchTemplate(b_w, template, cv2.TM_CCOEFF_NORMED)
+        res = cv2.matchTemplate(third_img, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         print(f"{i}: Max val: {max_val} @ {max_loc}")
         bottom_right = (max_loc[0] + w, max_loc[1] + h)
@@ -71,11 +74,11 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task3(image_path, config):
     # TODO: Implement task 3 here
-    digit = get_digit_num(image_path)
-    print(digit)
+    img = cv2.imread(image_path)
+    get_nearest_therm_digits(img)
     output_path = f"output/task3/result.txt"
     save_output(output_path, "Task 3 output", output_type="txt")
 
 
 if __name__ == "__main__":
-    run_task3("data/task3/lcd4/d7.png", None)
+    run_task3("data/task3/thermo1/t.png", None)
