@@ -5,9 +5,13 @@ import numpy as np
 
 
 # convert and filter out noise
-def preprocess_image(img, resize=True, resize_dimensions=(600, 480), gauss=True):
+def preprocess_image(
+    img, resize=True, resize_dimensions=(600, 480), gauss=True
+):
     if resize:
-        resized = cv2.resize(img, resize_dimensions, interpolation=cv2.INTER_LINEAR)
+        resized = cv2.resize(
+            img, resize_dimensions, interpolation=cv2.INTER_LINEAR
+        )
     else:
         resized = img
     grayed = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
@@ -57,6 +61,25 @@ def extract_red(loaded_img):
     return (x, y, w, h)
 
 
+# resizes an image a bit smarter by padding it out if one dimension is smaller than requested
+# used for digit recognition as default cv2 resizing tends to blow up the '1' and make it hard to recognise
+# look the SVM can probably learn it but better safe than sorry
+# @param img - loaded cv2 img
+# @param dims - (w,h) of target sizing
+def resize(img, dims):
+    tar_w, tar_h = dims
+
+    h, w = img.shape
+    if h < tar_h or w < tar_w:
+        pad_h = max(0, tar_h - h)
+        pad_w = max(0, tar_h - w)
+        img = cv2.copyMakeBorder(
+            img, pad_h, 0, pad_w, 0, cv2.BORDER_CONSTANT, value=255
+        )
+
+    return cv2.resize(img, (tar_w, tar_h), cv2.INTER_AREA)
+
+
 # calculates the digit from some lcd segment mathemtically
 # much more robust, not allowed by assignment guidelines :(
 # using as backup plan if classifier doesn't work
@@ -83,7 +106,9 @@ def get_digit_num_manual(digit):
 
     # number 1 digit will only have 2 segments - computation will fail
     # just count number of countours and if we only have two its probs a 1
-    num_cnts, _ = cv2.findContours(digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    num_cnts, _ = cv2.findContours(
+        digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     if len(num_cnts) == 2:
         return 1

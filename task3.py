@@ -17,44 +17,12 @@
 import os
 
 import cv2
-import numpy as np
-from ultralytics import YOLO
 
-from lib.utils import get_digit_num_manual
+from lib.svm import test_digit
 
 
 def get_digit_num(img_path):
-    # load image and threshold to b/w as thats what model was trained on
-    b_w = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-    digit = cv2.threshold(b_w, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    # tiny filtering step
-    kernel = np.ones((1, 1), np.uint8)
-    mask = cv2.morphologyEx(digit, cv2.MORPH_OPEN, kernel)
-
-    # pad out any dimension < 100 to 100 so it doesnt do any goofy stretching
-    h, w = mask.shape
-    if h < 128 or w < 128:
-        pad_h = max(0, 128 - h)
-        pad_w = max(0, 128 - w)
-        mask = cv2.copyMakeBorder(
-            mask, pad_h, 0, pad_w, 0, cv2.BORDER_CONSTANT, value=255
-        )
-
-    img_fin = cv2.resize(mask, (128, 128), cv2.INTER_AREA)
-
-    model = YOLO("./models/digit_cls.pt")
-
-    result = model.predict(img_fin)[0]
-
-    confidence = result.probs.top1conf
-    if confidence < 0.8:
-        # method expects inverted
-        digit = cv2.threshold(
-            b_w, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU
-        )[1]
-        return get_digit_num_manual(digit)
-    else:
-        return int(result.probs.top1)
+    return test_digit(img_path)
 
 
 # template match to find the nearest digits
