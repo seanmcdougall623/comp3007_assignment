@@ -17,6 +17,8 @@
 import os
 
 import cv2
+import numpy as np
+from ultralytics import YOLO
 
 from lib.utils import preprocess_image
 
@@ -36,25 +38,42 @@ def save_output(output_path, content, output_type="txt"):
         print("Unsupported output type. Use 'txt' or 'image'.")
 
 
+def identify_object(img_path):
+    img = cv2.imread(img_path)
+    img = cv2.resize(img, (800, 600))
+
+    model = YOLO("models/bp_therm_ident.pt")
+
+    results = model.predict(img)
+
+    for result in results:
+        print(result.obb)
+        for box in result.obb:
+            corners = box.xyxyxyxy[0]
+            confidence = float(box.conf[0])
+            class_id = int(box.cls[0])
+            class_name = model.names[class_id]
+
+            if confidence > 0.3:
+                # Draw bounding box
+                points = np.array(corners.cpu(), dtype=np.int32).reshape(
+                    (-1, 1, 2)
+                )
+                cv2.polylines(
+                    img,
+                    [points],
+                    isClosed=True,
+                    color=(0, 255, 0),
+                    thickness=2,
+                )
+
+    cv2.imshow("Predictions", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
 def extract_thermo(img):
-
-    img_edges = cv2.Canny(img, threshold1=5, threshold2=120)
-
-    contours, _ = cv2.findContours(
-        img_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
-    ref_cnt = []
-
-    for cnt in contours:
-        epsilon = 0.005 * cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, epsilon, True)
-
-        area = cv2.contourArea(approx)
-        if area > 100:
-            ref_cnt.append(approx)
-
-    cv2.drawContours(img, ref_cnt, -1, (0, 255, 0), 2)
-    return img
+    pass
 
 
 def extract_bp(img):
@@ -62,18 +81,10 @@ def extract_bp(img):
 
 
 def run_task1(image_path, config):
-    # TODO: Implement task 1 here
-    img = cv2.imread(image_path)
-    preprocess = preprocess_image(img)
-    out = extract_thermo(preprocess)
-    cv2.imshow("output", out)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
-# output_path = f"output/task1/result.txt"
-# save_output(output_path, "Task 1 output", output_type="txt")
+    identify_object(image_path)
+    # output_path = f"output/task1/result.txt"
+    # save_output(output_path, "Task 1 output", output_type="txt")
 
 
 if __name__ == "__main__":
-    run_task1("./data/task1/img1.jpg", None)
+    run_task1("./data/task1/img5.jpg", None)

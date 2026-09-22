@@ -17,7 +17,6 @@
 import os
 
 import cv2
-import numpy as np
 
 from lib.svm import test_bp_digit, test_therm_digit
 from lib.utils import extract_digits, extract_red
@@ -121,9 +120,10 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task3(image_path, config):
     # TODO: Implement task 3 here
-    print(test_bp_digit("data/task3/lcd2/d1.png"))
-    merc_reading = get_therm_reading(image_path)
-    print(merc_reading)
+    for i in range(1, 8):
+        print(get_digit_num(f"data/task3/lcd5/d{i}.png"))
+    # merc_reading = get_therm_reading(image_path)
+    # print(merc_reading)
     output_path = f"output/task3/result.txt"
     save_output(output_path, "Task 3 output", output_type="txt")
 
