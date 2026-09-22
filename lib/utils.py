@@ -1,3 +1,4 @@
+import math
 import os
 
 import cv2
@@ -31,6 +32,56 @@ def load_dotenv():
         for line in f:
             key, value = line.strip().split("=", 1)
             os.environ[key] = value
+
+
+# helper method to extract digits
+# used for both task 2 adn 3
+def extract_digits(
+    img,
+    kernel_size=(5, 5),
+    threshold1=5,
+    threshold2=120,
+    draw=False,
+    area_threshold=2000,
+):
+    # thresholding
+    img_edges = cv2.Canny(img, threshold1, threshold2)
+
+    # dilate the threshold a little to connect the segments
+    kernel = np.ones(kernel_size, np.uint8)
+    img_dil = cv2.dilate(img_edges, kernel, iterations=1)
+
+    contours, _ = cv2.findContours(
+        img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    ref_cnt = []
+
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        area = w * h
+        # check if sufficiently big, and rectangular shape
+        if area > area_threshold and (w * 1.3 < h):
+            # if we want to draw use direct contour approximation
+            # used for drawing the output if required
+            if draw:
+                ref_cnt.append(
+                    np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
+                )
+            else:
+                # much more computational efficent
+                ref_cnt.append((x, y, w, h))
+
+    # sort based on pixel position
+    # take into account both x and y
+    # idk probably not efficient but shld be fine
+    # only sort if we aren't drawing cause otherwise this method breaks and drawing is really just an diagnostic tool anyway
+    if not draw:
+        ref_cnt = sorted(
+            ref_cnt, key=lambda r: math.sqrt(r[0] ** 2 + r[1] ** 2)
+        )
+
+    return ref_cnt
 
 
 # extracts coordinates of largest red region in image
@@ -72,9 +123,16 @@ def resize(img, dims):
     h, w = img.shape
     if h < tar_h or w < tar_w:
         pad_h = max(0, tar_h - h)
-        pad_w = max(0, tar_h - w)
+        pad_w = max(0, tar_w - w)
+
+        # center padding
+        top = pad_h // 2
+        bottom = pad_h - top
+        left = pad_w // 2
+        right = pad_w - left
+
         img = cv2.copyMakeBorder(
-            img, pad_h, 0, pad_w, 0, cv2.BORDER_CONSTANT, value=255
+            img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=255
         )
 
     return cv2.resize(img, (tar_w, tar_h), cv2.INTER_AREA)

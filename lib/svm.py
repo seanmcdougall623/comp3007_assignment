@@ -13,16 +13,18 @@ except ImportError:
 root_dir = os.path.dirname(__file__)
 
 # TODO: find a 0 LCD segment cause you could be dead
+# or just anyway BP reading with a 0 in it
 
 
 # implementation inspired by https://github.com/shanlau/SVM_Recognizing_Digit/blob/master/svm_model.py
 
 
-def load_image(img_path):
-    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+def load_image(img, size, loaded=False):
+    if not loaded:
+        img = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
 
-    # resize to 64x64 to reduce feature length
-    img = resize(img, (64, 64))
+    # resize to reduce feature length
+    img = resize(img, size)
 
     # threshold just to remove the segment noise or any light pollution
     digit = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
@@ -30,12 +32,11 @@ def load_image(img_path):
     return digit
 
 
-def load_images(root_dir):
+def load_images(root_dir, size=(64, 64)):
     train_data = []
     for filename in sorted(os.listdir(root_dir)):
         if filename.endswith(".png"):
-
-            digit = load_image(root_dir + filename)
+            digit = load_image(root_dir + filename, size=size)
 
             train_data.append(digit)
 
@@ -49,8 +50,6 @@ def train_svm(train_data, digit_count, size, model_dir, start_label=0):
     train_label = np.arange(
         start_label, start_label + digit_count, dtype=np.int32
     )
-    print(train_label)
-
     # create and train the model!
 
     model = cv2.ml.SVM_create()
@@ -72,35 +71,40 @@ def train_bp():
 def train_therm():
     img_dir = root_dir + "/therm_digits/"
     model_dir = str(Path(root_dir).parent) + "/models/therm_svm.xml"
-    loaded_images = load_images(img_dir)
-    train_svm(loaded_images, 8, 64 * 64, model_dir, start_label=-2)
+    loaded_images = load_images(img_dir, size=(32, 32))
+    train_svm(loaded_images, 8, 32 * 32, model_dir, start_label=-2)
 
 
-def test_digit(img_path, model_dir, size=4096):
-    digit = load_image(img_path)
+def test_digit(img_path, model_dir, size=(64, 64), loaded=False):
+    d_size = size[0] * size[1]
+    digit = load_image(
+        img_path,
+        size,
+        loaded=loaded,
+    )
     model = cv2.ml.SVM_load(model_dir)
 
-    sample = np.array([digit], dtype=np.float32).reshape((1, size))
+    sample = np.array([digit], dtype=np.float32).reshape((1, d_size))
 
     _, pred = model.predict(sample)
 
     return int(pred[0][0])
 
 
-def test_bp_digit(img_path):
+def test_bp_digit(img_path, loaded=False):
     model_dir = str(Path(root_dir).parent) + "/models/bp_svm.xml"
-    return test_digit(img_path, model_dir)
+    return test_digit(img_path, model_dir, loaded=loaded)
 
 
-def test_therm_digit(img_path):
+def test_therm_digit(img_path, loaded=False):
     model_dir = str(Path(root_dir).parent) + "/models/therm_svm.xml"
-    return test_digit(img_path, model_dir)
+    return test_digit(img_path, model_dir, size=(32, 32), loaded=loaded)
 
 
 if __name__ == "__main__":
     train_bp()
     train_therm()
     bp = test_bp_digit(os.getcwd() + "/data/task3/lcd4/d7.png")
-    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/0.png")
+    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/1.png")
     print(bp)
     print(therm)
