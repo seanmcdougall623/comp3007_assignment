@@ -12,7 +12,7 @@ def get_rb_dataset():
     project = rf.workspace("sean-mcdougall").project(
         "bp-therm-identification"
     )
-    project.version(6).download(
+    project.version(7).download(
         "yolov8-obb", location="./datasets/task1", overwrite=True
     )
 
