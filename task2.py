@@ -26,11 +26,16 @@ def find_lcd_digits(img, draw=False):
     img = cv2.imread(img)
     pre_img = preprocess_image(img, resize=False)
 
-    ref_cnt = extract_digits(pre_img, draw=draw)
+    ref_cnt = extract_digits(
+        pre_img, kernel_size=(7, 7), area_threshold=1000, draw=draw
+    )
 
     # only draw if we wanna see the output
     if draw:
         cv2.drawContours(img, ref_cnt, -1, (0, 255, 0), 2)
+        cv2.imshow("Recognised Digits", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     return ref_cnt, img
 
@@ -83,8 +88,10 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task2(image_path, config):
     # TODO: Implement task 2 here
-    box, img = find_thermo_section(image_path)
-    extract_thermo_section(img, box, "output/task2/")
+    ref_cnt, img = find_lcd_digits(image_path, draw=False)
+    export_lcd_digits(img, ref_cnt, "output/task2/")
+    # box, img = find_thermo_section(image_path)
+    # extract_thermo_section(img, box, "output/task2/")
     # cv2.imshow("output", img)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
@@ -94,4 +101,4 @@ def run_task2(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task2("./data/task2/thermo1.png", None)
+    run_task2("./data/task2/lcd6.png", None)

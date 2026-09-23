@@ -128,9 +128,38 @@ def extract_bp(img, bb):
     M = cv2.getPerspectiveTransform(corners, dst)
     warped = cv2.warpPerspective(img, M, (max_width, max_height))
 
-    cv2.imshow("Cropped Thermometer", warped)
+    # after skewing, LCD image can sometimes not be perfectly flat
+    # use hough transformation to ensure LCD is as flat as possible
+
+    gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150)
+
+    h, w = gray.shape
+    lines = cv2.HoughLines(edges, 1, np.pi / 360, threshold=100)
+
+    # clean up this code cause it kinda aaa
+    angles = []
+    for _, theta in lines[:, 0]:
+        # find angle of lines
+        # maximum orientation is gonna be 45 degrees
+        orient = (theta * 180.0 / np.pi) - 90.0
+        orient = ((orient + 45) % 90) - 45
+        if abs(orient) <= 45:
+            angles.append(orient)
+
+    correction = float(np.median(angles))
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, correction, 1.0)
+
+    out = cv2.warpAffine(
+        warped, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
+    )
+
+    cv2.imshow("Cropped BP", out)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+    cv2.imwrite("output/task1/bp_cropped.png", out)
 
 
 def run_task1(image_path, config):
@@ -148,4 +177,4 @@ def run_task1(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task1("./data/task1/img4.jpg", None)
+    run_task1("./data/task1/img5.jpg", None)
