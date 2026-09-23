@@ -55,7 +55,7 @@ def find_thermo_section(img):
     # approach is to look for red line as thats only thing consistent
     # line is too skinny to do any line/edge detection
 
-    # cut down to middle tube, and remove bottom 10% (bulb)
+    # cut down to middle tube, and remove bottom 20% (bulb)
     tube_w = img_w * 0.1
     cx = img_w // 2
 
@@ -66,7 +66,7 @@ def find_thermo_section(img):
 
     x, y, w, _ = extract_red(tube_img)
 
-    top_point = (x + w // 2, y + int(img_h * 0.01))
+    top_point = (x + w // 2, y + int(img_h * 0.02))
     half_height = int(img_h * 0.06)
     y0 = max(0, top_point[1] - half_height)
     y1 = min(img_h, top_point[1] + half_height)

@@ -21,9 +21,13 @@ def order_corners(corners):
 
 
 # convert and filter out noise
-def preprocess_image(img, resize=True, resize_dimensions=(600, 480), gauss=True):
+def preprocess_image(
+    img, resize=True, resize_dimensions=(600, 480), gauss=True
+):
     if resize:
-        resized = cv2.resize(img, resize_dimensions, interpolation=cv2.INTER_LINEAR)
+        resized = cv2.resize(
+            img, resize_dimensions, interpolation=cv2.INTER_LINEAR
+        )
     else:
         resized = img
     grayed = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
@@ -62,7 +66,9 @@ def extract_digits(
     kernel = np.ones(kernel_size, np.uint8)
     img_dil = cv2.dilate(img_edges, kernel, iterations=1)
 
-    contours, _ = cv2.findContours(img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     ref_cnt = []
 
@@ -86,7 +92,9 @@ def extract_digits(
     # idk probably not efficient but shld be fine
     # only sort if we aren't drawing cause otherwise this method breaks and drawing is really just an diagnostic tool anyway
     if not draw:
-        ref_cnt = sorted(ref_cnt, key=lambda r: math.sqrt(r[0] ** 2 + r[1] ** 2))
+        ref_cnt = sorted(
+            ref_cnt, key=lambda r: math.sqrt(r[0] ** 2 + r[1] ** 2)
+        )
 
     return ref_cnt
 
@@ -108,6 +116,10 @@ def extract_red(loaded_img):
     # use morphological filter to filter out noise
     kernel = np.ones((2, 2), np.uint8)
     mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
+
+    cv2.imshow("Cropped BP", mask)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     # work out where largest blob is and grab it
     _, _, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
@@ -171,7 +183,9 @@ def get_digit_num_manual(digit):
 
     # number 1 digit will only have 2 segments - computation will fail
     # just count number of countours and if we only have two its probs a 1
-    num_cnts, _ = cv2.findContours(digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    num_cnts, _ = cv2.findContours(
+        digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     if len(num_cnts) == 2:
         return 1
