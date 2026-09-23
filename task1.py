@@ -20,7 +20,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
-from lib.utils import preprocess_image
+from lib.utils import order_corners
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -98,7 +98,39 @@ def extract_thermo(img, bb):
 
 
 def extract_bp(img, bb):
-    pass
+    # load in image
+    img = cv2.imread(img)
+
+    # convert to np and order in l->r, t->b
+    corners = order_corners(np.array(bb, dtype=np.float32).reshape(4, 2))
+
+    tl, tr, br, bl = corners
+    # implementation inspired by https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
+    # use linalg normalisation cuz thats less words
+    widthA = np.linalg.norm(br - bl)
+    widthB = np.linalg.norm(tr - tl)
+    max_width = max(int(widthA), int(widthB))
+
+    heightA = np.linalg.norm(tr - br)
+    heightB = np.linalg.norm(tl - bl)
+    max_height = max(int(heightA), int(heightB))
+
+    dst = np.array(
+        [
+            [0, 0],
+            [max_width - 1, 0],
+            [max_width - 1, max_height - 1],
+            [0, max_height - 1],
+        ],
+        dtype="float32",
+    )
+
+    M = cv2.getPerspectiveTransform(corners, dst)
+    warped = cv2.warpPerspective(img, M, (max_width, max_height))
+
+    cv2.imshow("Cropped Thermometer", warped)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def run_task1(image_path, config):
@@ -116,4 +148,4 @@ def run_task1(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task1("./data/task1/img6.jpg", None)
+    run_task1("./data/task1/img4.jpg", None)
