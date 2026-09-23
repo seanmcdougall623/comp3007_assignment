@@ -66,7 +66,7 @@ def extract_thermo(img, bb):
     img = cv2.imread(img)
 
     # convert to np
-    corners = np.array(bb, dtype=np.float32)
+    corners = np.array(bb.cpu().numpy(), dtype=np.float32)
     # padding if needed (really just leftover from testing)
     pad = 0
 
@@ -96,13 +96,17 @@ def extract_thermo(img, bb):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+    cv2.imwrite("output/task1/thermo_cropped.png", crop)
+
 
 def extract_bp(img, bb):
     # load in image
     img = cv2.imread(img)
 
     # convert to np and order in l->r, t->b
-    corners = order_corners(np.array(bb, dtype=np.float32).reshape(4, 2))
+    corners = order_corners(
+        np.array(bb.cpu().numpy(), dtype=np.float32).reshape(4, 2)
+    )
 
     tl, tr, br, bl = corners
     # implementation inspired by https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
@@ -141,7 +145,8 @@ def extract_bp(img, bb):
     angles = []
     for _, theta in lines[:, 0]:
         # find angle of lines
-        # maximum orientation is gonna be 45 degrees
+        # maximum orientation is gonna be 45 degrees otherwise it will wrap around
+        # genuinely do not know why but only seems to work in degs for some reason think my math is bad
         orient = (theta * 180.0 / np.pi) - 90.0
         orient = ((orient + 45) % 90) - 45
         if abs(orient) <= 45:
@@ -152,7 +157,11 @@ def extract_bp(img, bb):
     M = cv2.getRotationMatrix2D(center, correction, 1.0)
 
     out = cv2.warpAffine(
-        warped, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
+        warped,
+        M,
+        (w, h),
+        flags=cv2.INTER_CUBIC,
+        borderMode=cv2.BORDER_REPLICATE,
     )
 
     cv2.imshow("Cropped BP", out)
@@ -177,4 +186,4 @@ def run_task1(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task1("./data/task1/img5.jpg", None)
+    run_task1("./data/task1/img8.jpg", None)
