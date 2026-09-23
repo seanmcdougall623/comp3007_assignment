@@ -40,51 +40,80 @@ def save_output(output_path, content, output_type="txt"):
 
 def identify_object(img_path):
     img = cv2.imread(img_path)
-    img = cv2.resize(img, (800, 600))
 
     model = YOLO("models/bp_therm_ident.pt")
 
     results = model.predict(img)
 
+    # output has shape (img_cls, conf, (xywhr))
+    output = []
+
     for result in results:
-        print(result.obb)
         for box in result.obb:
-            corners = box.xyxyxyxy[0]
-            confidence = float(box.conf[0])
+            corners = box.xyxyxyxy
+            conf = float(box.conf[0])
             class_id = int(box.cls[0])
             class_name = model.names[class_id]
 
-            if confidence > 0.3:
-                # Draw bounding box
-                points = np.array(corners.cpu(), dtype=np.int32).reshape(
-                    (-1, 1, 2)
-                )
-                cv2.polylines(
-                    img,
-                    [points],
-                    isClosed=True,
-                    color=(0, 255, 0),
-                    thickness=2,
-                )
+            if conf > 0.7:
+                output.append((class_name, round(conf, 3), corners))
 
-    cv2.imshow("Predictions", img)
+    return output
+
+
+def extract_thermo(img, bb):
+    # load in image
+    img = cv2.imread(img)
+
+    # convert to np
+    corners = np.array(bb, dtype=np.float32)
+    # padding if needed (really just leftover from testing)
+    pad = 0
+
+    (cx, cy), (w, h), angle = cv2.minAreaRect(corners)
+    w, h = w + 2 * pad, h + 2 * pad
+
+    # crop out interested section
+    # code taken from https://github.com/ultralytics/ultralytics/issues/9344#issuecomment-2022372776
+
+    H, W = img.shape[:2]
+    M = cv2.getRotationMatrix2D((cx, cy), angle, 1.0)
+    rotated = cv2.warpAffine(img, M, (W, H), flags=cv2.INTER_CUBIC)
+
+    # calc points for crop
+    x1, y1 = round(cx - w / 2), round(cy - h / 2)
+    x2, y2 = round(cx + w / 2), round(cy + h / 2)
+    x1, y1 = max(x1, 0), max(y1, 0)
+    x2, y2 = min(x2, W), min(y2, H)
+
+    crop = rotated[y1:y2, x1:x2]
+
+    # rotate if we aren't as expected
+    if crop.shape[1] > crop.shape[0]:
+        crop = cv2.rotate(crop, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    cv2.imshow("Cropped Thermometer", crop)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 
-def extract_thermo(img):
-    pass
-
-
-def extract_bp(img):
+def extract_bp(img, bb):
     pass
 
 
 def run_task1(image_path, config):
-    identify_object(image_path)
+    out = identify_object(image_path)
+    for item in out:
+        if item[0] == "therm":
+            extract_thermo(image_path, item[2])
+        elif item[0] == "bp":
+            extract_bp(image_path, item[2])
+        else:
+            print("No valid object detected in the image.")
+            return
     # output_path = f"output/task1/result.txt"
     # save_output(output_path, "Task 1 output", output_type="txt")
 
 
 if __name__ == "__main__":
-    run_task1("./data/task1/img5.jpg", None)
+    run_task1("./data/task1/img6.jpg", None)
