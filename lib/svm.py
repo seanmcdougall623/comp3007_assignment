@@ -10,7 +10,7 @@ try:
 except ImportError:
     from lib.utils import resize
 
-root_dir = os.path.dirname(__file__)
+root_dir = Path(os.path.dirname(__file__))
 
 # TODO: find a 0 LCD segment cause you could be dead
 # or just anyway BP reading with a 0 in it
@@ -33,47 +33,85 @@ def load_image(img, size, loaded=False):
     return digit
 
 
-def load_images(root_dir, size=(64, 64)):
+def load_images(img_path, size=(64, 64)):
     train_data = []
-    for filename in sorted(os.listdir(root_dir)):
-        if filename.endswith(".png"):
-            digit = load_image(root_dir + filename, size=size)
+    label_count = 0
+    data_count = 0
+    labels = []
+    print(img_path)
+    for foldername in sorted(os.listdir(img_path)):
+        for filename in sorted(os.listdir(img_path / foldername)):
+            if filename.endswith(".png"):
+                digit = load_image(
+                    img_path / foldername / filename, size=size
+                )
 
-            train_data.append(digit)
+                train_data.append(digit)
+                labels.append(int(foldername))
+                data_count += 1
+        label_count += 1
 
     # convert to np array and return
-    return np.asarray(train_data, dtype=np.float32)
-
-
-def train_svm(train_data, digit_count, size, model_dir, start_label=0):
-    # create labels and reshape to 1d array
-    train_data = np.reshape(train_data, (digit_count, size))
-    train_label = np.arange(
-        start_label, start_label + digit_count, dtype=np.int32
+    return (
+        np.asarray(train_data, dtype=np.float32),
+        np.asarray(labels, dtype=np.int32),
+        label_count,
+        data_count // label_count,
     )
+
+
+def train_svm(
+    train_data,
+    train_labels,
+    digit_count,
+    data_count,
+    size,
+    model_dir,
+):
+    # create labels and reshape to 1d array
+    train_data = np.reshape(train_data, (digit_count * data_count, size))
+
     # create and train the model!
 
     model = cv2.ml.SVM_create()
     model.setType(cv2.ml.SVM_C_SVC)
     model.setKernel(cv2.ml.SVM_LINEAR)
     model.setTermCriteria((cv2.TERM_CRITERIA_COUNT, 100, 1.0e-06))
-    model.train(train_data, cv2.ml.ROW_SAMPLE, train_label)
+    model.train(train_data, cv2.ml.ROW_SAMPLE, train_labels)
 
     model.save(model_dir)
 
 
 def train_bp():
-    img_dir = root_dir + "/lcd_digits/"
-    model_dir = str(Path(root_dir).parent) + "/models/bp_svm.xml"
-    loaded_images = load_images(img_dir)
-    train_svm(loaded_images, 9, 64 * 64, model_dir, start_label=1)
+    img_dir = root_dir / "../datasets/task3/lcd"
+    model_dir = root_dir / "../models/bp_svm.xml"
+    loaded_images, loaded_labels, label_count, data_count = load_images(
+        img_dir
+    )
+    train_svm(
+        loaded_images,
+        loaded_labels,
+        label_count,
+        data_count,
+        64 * 64,
+        model_dir,
+    )
 
 
 def train_therm():
-    img_dir = root_dir + "/therm_digits/"
-    model_dir = str(Path(root_dir).parent) + "/models/therm_svm.xml"
-    loaded_images = load_images(img_dir, size=(32, 32))
-    train_svm(loaded_images, 8, 32 * 32, model_dir, start_label=-2)
+    img_dir = root_dir / "../datasets/task3/therm"
+    model_dir = root_dir / "../models/therm_svm.xml"
+    loaded_images, loaded_labels, label_count, data_count = load_images(
+        img_dir, size=(32, 32)
+    )
+    train_svm(
+        loaded_images,
+        loaded_labels,
+        label_count,
+        data_count,
+        32 * 32,
+        model_dir,
+    )
 
 
 def test_digit(img_path, model_dir, size=(64, 64), loaded=False):
@@ -93,12 +131,12 @@ def test_digit(img_path, model_dir, size=(64, 64), loaded=False):
 
 
 def test_bp_digit(img_path, loaded=False):
-    model_dir = str(Path(root_dir).parent) + "/models/bp_svm.xml"
+    model_dir = root_dir / "../models/bp_svm.xml"
     return test_digit(img_path, model_dir, loaded=loaded)
 
 
 def test_therm_digit(img_path, loaded=False):
-    model_dir = str(Path(root_dir).parent) + "/models/therm_svm.xml"
+    model_dir = root_dir / "../models/therm_svm.xml"
     return test_digit(img_path, model_dir, size=(32, 32), loaded=loaded)
 
 
