@@ -174,6 +174,7 @@ def extract_bp(img, bb):
 def run_task1(image_path, config):
     out = identify_object(image_path)
     for item in out:
+        # TODO: decide whether to just use one function for both cause it seems pretty stable
         if item[0] == "therm":
             extract_thermo(image_path, item[2])
         elif item[0] == "bp":

@@ -102,24 +102,19 @@ def extract_digits(
 # extracts coordinates of largest red region in image
 # used to computer thermometer info
 # @param loaded_img must be already loaded opencv2 img
-def extract_red(loaded_img):
-    img_hsv = cv2.cvtColor(loaded_img, cv2.COLOR_BGR2HSV)
+def extract_red(loaded_img, a_filt=130):
+    img_lab = cv2.cvtColor(loaded_img, cv2.COLOR_BGR2LAB)
 
-    # !!!
-    # TODO: REFERENCE: AI GENERATED
-    # !!!
-    lower = np.array([5, 55, 90])
-    upper = np.array([25, 255, 200])
-    # ai stuff ends
-    blur = cv2.GaussianBlur(img_hsv, (3, 3), 0)
-    red_mask = cv2.inRange(blur, lower, upper)
+    a = img_lab[:, :, 1]
+    red_mask = np.where(a > a_filt, 255, 0).astype(np.uint8)
+
+    # close gaps due to noise
+    close_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 50))
+    mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, close_kernel)
+
     # use morphological filter to filter out noise
     kernel = np.ones((2, 2), np.uint8)
-    mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
-
-    cv2.imshow("Cropped BP", mask)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
     # work out where largest blob is and grab it
     _, _, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)

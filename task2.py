@@ -66,10 +66,8 @@ def find_thermo_section(img):
 
     x, y, w, _ = extract_red(tube_img)
 
-    top_point = (x + w // 2, y + int(img_h * 0.02))
-    half_height = int(img_h * 0.06)
-    y0 = max(0, top_point[1] - half_height)
-    y1 = min(img_h, top_point[1] + half_height)
+    y0 = int(max(0, y - img_h * 0.06))
+    y1 = int(min(img_h, y + img_h * 0.08))
     box = (0, y0, img_w, y1 - y0)
     return box, img
 
@@ -110,4 +108,4 @@ def run_task2(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task2("./data/task2/thermo2.png", None)
+    run_task2("./data/task2/thermo3.png", None)

@@ -56,17 +56,24 @@ def get_nearest_therm_digits(img):
         x, y, w, h = digit
         d_img = third_img[y : y + h, x : x + w]
         num = test_therm_digit(d_img, loaded=True)
-        # sanity check in case misclassification
-        # if we did misclassify just take the first digit as ground truth bcz it seems to be more acccurate in testing
-        if len(output) >= 1:
-            next_num = output[0][0] - 1
-            if next_num != num:
-                print(
-                    "Classifying error when establishing second digit. Taking first as ground truth"
-                )
-                num = next_num
+        output.append([num, x, y, w, h])
 
-        output.append((num, x, y, w, h))
+    # sanity check in case misclassification
+    # if we did misclassify just take the highest digit as ground truth bcz it seems to be more acccurate in testing
+    if len(output) >= 2:
+        d1 = output[0][0]
+        d2 = output[1][0]
+        if abs(d1 - d2) != 1 or d1 < d2:
+            truth = max(d1, d2)
+            print(
+                f"Misclassficiation detected! Received {d1} and {d2}. Using {truth} as ground truth"
+            )
+            # so we can update in place, keeping place
+            i = (d1, d2).index(truth)
+            if i:
+                output[0][0] = truth + 1
+            else:
+                output[1][0] = truth - 1
 
     return output
 
@@ -75,7 +82,6 @@ def get_nearest_therm_digits(img):
 # mercury value will just be fixed spacing and we can calculate from there
 def get_therm_reading(img):
     img = cv2.imread(img)
-    _, merc_y, _, _ = extract_red(img)
     digits = get_nearest_therm_digits(img)
 
     # don't need x values just y value and digit value
@@ -87,20 +93,27 @@ def get_therm_reading(img):
         raise ValueError(
             f"Classification error! Received readings of {d1} and {d2}"
         )
-
     # calculate px spacing
     # 1u = 0.5 degrees
     px_spacing = abs(y1 - y2) // 10
 
-    # calculate mercury reading
-    # offset by midpoint of first reading (where the closest known value starts)
-    merc_reading = ((y2 + h2 // 2) - merc_y) / px_spacing
+    # loop through in case we extract the mercury a bit optimistically and place the temperature too high
+    temp_reading = 99
+    start_reg = 130
+    while d1 - (temp_reading / 10) < 0 or (temp_reading / 10) - d2 > 1:
+        _, merc_y, _, _ = extract_red(img, a_filt=start_reg)
 
-    # add in temp offset
+        # calculate mercury reading
+        # offset by midpoint of first reading (where the closest known value starts)
+        merc_reading = ((y2 + h2 // 2) - merc_y) / px_spacing
+        # add in temp offset
+        merc_reading += d2 * 10
+        temp_reading = round(merc_reading, 1)
 
-    merc_reading += d2 * 10
+        start_reg += 1
+
     # round to 1 decimal place cause we ain't that accurate
-    return round(merc_reading, 1)
+    return temp_reading
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -120,10 +133,10 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task3(image_path, config):
     # TODO: Implement task 3 here
-    for i in range(1, 8):
-        print(get_digit_num(f"data/task3/lcd5/d{i}.png"))
-    # merc_reading = get_therm_reading(image_path)
-    # print(merc_reading)
+    # for i in range(1, 8):
+    #     print(get_digit_num(f"data/task3/lcd5/d{i}.png"))
+    merc_reading = get_therm_reading(image_path)
+    print(merc_reading)
     output_path = f"output/task3/result.txt"
     save_output(output_path, "Task 3 output", output_type="txt")
 
