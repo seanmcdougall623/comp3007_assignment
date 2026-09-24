@@ -14,11 +14,17 @@
 # Author: [Your Name]
 # Last Modified: 2024-09-09
 
+import math
 import os
 
 import cv2
 
-from lib.utils import extract_digits, extract_red, preprocess_image
+from lib.utils import (
+    extract_digits,
+    extract_red,
+    preprocess_image,
+    extract_therm_digits,
+)
 
 
 def find_lcd_digits(img, draw=False):
@@ -61,13 +67,50 @@ def find_thermo_section(img):
 
     xl = int(cx - tube_w // 2)
     xr = int(cx + tube_w // 2)
+    y_bot = int(img_h * 0.8)
 
-    tube_img = img[: int(img_h * 0.8), xl:xr]
+    tube_img = img[:y_bot, xl:xr]
 
-    x, y, w, _ = extract_red(tube_img)
+    mx, my, _, _ = extract_red(tube_img)
 
-    y0 = int(max(0, y - img_h * 0.06))
-    y1 = int(min(img_h, y + img_h * 0.08))
+    # find digits closest to the mercury reading, and use that to crop the image down to just the thermometer section
+    ref_cnt, _ = extract_therm_digits(img)
+
+    # find two boxes closest
+    # need to convert x,y from tube_img to img
+    x_mapped = mx + xl
+    closest = sorted(
+        ref_cnt,
+        # use euclidean distance to find distance from bounding box
+        key=lambda b: math.sqrt((x_mapped - b[0]) ** 2 + (my - b[1]) ** 2),
+    )
+
+    # tree needs to be traversed to find
+    # 1. top_digit needs to be > merc_y reading
+    # 2. bottom_digit needs to be < merc_y reading
+    # 3. bottom_digit needs to be > 5% away from top_digit, otherwise we've grabbed the wrong digit
+
+    # add 2% of padding just in case the mercury reading is close to a digit
+    tops = [b for b in closest if b[1] < my * 0.98]
+    bottoms = [b for b in closest if b[1] > my * 0.98]
+
+    top_digit = None
+    bottom_digit = None
+
+    found = False
+    for t in tops:
+        for b in bottoms:
+            if abs(b[1] - t[1]) > 0.05 * img_h:
+                top_digit = t
+                bottom_digit = b
+                found = True
+                break
+        if found:
+            break
+
+    y0 = top_digit[1] - 10
+    y1 = bottom_digit[1] + bottom_digit[3] + 10
+
     box = (0, y0, img_w, y1 - y0)
     return box, img
 

@@ -19,7 +19,7 @@ import os
 import cv2
 
 from lib.svm import test_bp_digit, test_therm_digit
-from lib.utils import extract_digits, extract_red
+from lib.utils import extract_digits, extract_red, extract_therm_digits
 
 
 def get_digit_num(img_path):
@@ -30,15 +30,9 @@ def get_digit_num(img_path):
 # @param img must be grayscale
 # @returns list of 2 digits (val, x, y, w, h)
 def get_nearest_therm_digits(img):
-    b_w = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # crop down to left hand third of image so we only get the digits in celsius
-    third_img = b_w[:, : b_w.shape[1] // 3]
 
-    # copy and gaussian blur to reduce noise
-    filtered = cv2.GaussianBlur(third_img, (5, 5), 0)
-    h, w = filtered.shape
-    ref_cnt = extract_digits(
-        filtered, kernel_size=(1, 1), area_threshold=h * w // 100
+    ref_cnt, third_img = extract_therm_digits(
+        img, area_threshold_scale=50, draw=False
     )
 
     # can sometimes falsely include the shadow from the thermometer

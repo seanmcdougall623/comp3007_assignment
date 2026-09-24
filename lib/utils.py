@@ -75,8 +75,10 @@ def extract_digits(
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         area = w * h
+        short_side = min(w, h)
+        long_side = max(w, h)
         # check if sufficiently big, and rectangular shape
-        if area > area_threshold and (w * 1.3 < h):
+        if area > area_threshold and (short_side * 1.3 < long_side):
             # if we want to draw use direct contour approximation
             # used for drawing the output if required
             if draw:
@@ -97,6 +99,34 @@ def extract_digits(
         )
 
     return ref_cnt
+
+
+# specifies extracting digits to just what we are interested in on the thermometer
+# used for both task 2 and task 3
+# @param requires img to be loaded already
+def extract_therm_digits(img, area_threshold_scale=500, draw=False):
+    b_w = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # crop down to left hand third of image so we only get the digits in celsius
+    third_img = b_w[:, : b_w.shape[1] // 3]
+
+    # copy and gaussian blur to reduce noise
+    filtered = cv2.GaussianBlur(third_img, (5, 5), 0)
+    h, w = filtered.shape
+    ref_cnt = extract_digits(
+        filtered,
+        kernel_size=(1, 1),
+        area_threshold=h * w // area_threshold_scale,
+        draw=draw,
+    )
+
+    if draw:
+        cv2.drawContours(third_img, ref_cnt, -1, (0, 255, 0), 2)
+
+        cv2.imshow("Thermometer Digits", third_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return ref_cnt, third_img
 
 
 # extracts coordinates of largest red region in image
