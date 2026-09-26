@@ -22,8 +22,8 @@ import cv2
 from lib.utils import (
     extract_digits,
     extract_red,
-    preprocess_image,
     extract_therm_digits,
+    preprocess_image,
 )
 
 
@@ -151,4 +151,4 @@ def run_task2(image_path, config):
 
 
 if __name__ == "__main__":
-    run_task2("./data/task2/thermo3.png", None)
+    run_task2("./output/task1/therm_cropped.png", None)

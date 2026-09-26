@@ -143,7 +143,7 @@ def test_therm_digit(img_path, loaded=False):
 if __name__ == "__main__":
     train_bp()
     train_therm()
-    bp = test_bp_digit(os.getcwd() + "/data/task3/lcd4/d7.png")
+    bp = test_bp_digit(os.getcwd() + "/output/task2/d2.png")
     therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/1.png")
     print(bp)
     print(therm)

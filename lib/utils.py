@@ -75,10 +75,8 @@ def extract_digits(
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         area = w * h
-        short_side = min(w, h)
-        long_side = max(w, h)
         # check if sufficiently big, and rectangular shape
-        if area > area_threshold and (short_side * 1.3 < long_side):
+        if area > area_threshold and (w * 1.3 < h):
             # if we want to draw use direct contour approximation
             # used for drawing the output if required
             if draw:

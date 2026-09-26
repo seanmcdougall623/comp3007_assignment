@@ -61,45 +61,7 @@ def identify_object(img_path):
     return output
 
 
-def extract_thermo(img, bb):
-    # load in image
-    img = cv2.imread(img)
-
-    # convert to np
-    corners = np.array(bb.cpu().numpy(), dtype=np.float32)
-    # padding if needed (really just leftover from testing)
-    pad = 0
-
-    (cx, cy), (w, h), angle = cv2.minAreaRect(corners)
-    w, h = w + 2 * pad, h + 2 * pad
-
-    # crop out interested section
-    # code taken from https://github.com/ultralytics/ultralytics/issues/9344#issuecomment-2022372776
-
-    H, W = img.shape[:2]
-    M = cv2.getRotationMatrix2D((cx, cy), angle, 1.0)
-    rotated = cv2.warpAffine(img, M, (W, H), flags=cv2.INTER_CUBIC)
-
-    # calc points for crop
-    x1, y1 = round(cx - w / 2), round(cy - h / 2)
-    x2, y2 = round(cx + w / 2), round(cy + h / 2)
-    x1, y1 = max(x1, 0), max(y1, 0)
-    x2, y2 = min(x2, W), min(y2, H)
-
-    crop = rotated[y1:y2, x1:x2]
-
-    # rotate if we aren't as expected
-    if crop.shape[1] > crop.shape[0]:
-        crop = cv2.rotate(crop, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-    cv2.imshow("Cropped Thermometer", crop)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-    cv2.imwrite("output/task1/thermo_cropped.png", crop)
-
-
-def extract_bp(img, bb):
+def extract_item(img, bb, item_type):
     # load in image
     img = cv2.imread(img)
 
@@ -132,18 +94,28 @@ def extract_bp(img, bb):
     M = cv2.getPerspectiveTransform(corners, dst)
     warped = cv2.warpPerspective(img, M, (max_width, max_height))
 
-    # after skewing, LCD image can sometimes not be perfectly flat
-    # use hough transformation to ensure LCD is as flat as possible
+    # rotate if we aren't as expected
+    if warped.shape[1] > warped.shape[0] and item_type == "therm":
+        warped = cv2.rotate(warped, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    # after skewing, image can sometimes not be perfectly flat
+    # use hough transformation to ensure flat as possible
 
     gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 50, 150)
 
     h, w = gray.shape
-    lines = cv2.HoughLines(edges, 1, np.pi / 360, threshold=100)
+
+    threshold = min(w, h) // 4
+
+    lines = cv2.HoughLines(edges, 1, np.pi / 360, threshold=threshold)
+
+    # find LCD screen lines if bp, otherwise grab a few mercury lines
+    max_lines = 4 if item_type == "bp" else 6
 
     # clean up this code cause it kinda aaa
     angles = []
-    for _, theta in lines[:, 0]:
+    for _, theta in lines[:max_lines, 0]:
         # find angle of lines
         # maximum orientation is gonna be 45 degrees otherwise it will wrap around
         # genuinely do not know why but only seems to work in degs for some reason think my math is bad
@@ -164,27 +136,25 @@ def extract_bp(img, bb):
         borderMode=cv2.BORDER_REPLICATE,
     )
 
-    cv2.imshow("Cropped BP", out)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Cropped BP", out)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
-    cv2.imwrite("output/task1/bp_cropped.png", out)
+    cv2.imwrite(f"output/task1/{item_type}_cropped.png", out)
 
 
 def run_task1(image_path, config):
     out = identify_object(image_path)
     for item in out:
         # TODO: decide whether to just use one function for both cause it seems pretty stable
-        if item[0] == "therm":
-            extract_thermo(image_path, item[2])
-        elif item[0] == "bp":
-            extract_bp(image_path, item[2])
-        else:
+        if not item:
             print("No valid object detected in the image.")
             return
+        extract_item(image_path, item[2], item[0])
+
     # output_path = f"output/task1/result.txt"
     # save_output(output_path, "Task 1 output", output_type="txt")
 
 
 if __name__ == "__main__":
-    run_task1("./data/task1/img8.jpg", None)
+    run_task1("./data/task1/img9.jpg", None)

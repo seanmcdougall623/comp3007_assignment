@@ -14,6 +14,7 @@
 # Author: [Your Name]
 # Last Modified: 2024-09-09
 
+import math
 import os
 
 import cv2
@@ -106,8 +107,8 @@ def get_therm_reading(img):
 
         start_reg += 1
 
-    # round to 1 decimal place cause we ain't that accurate
-    return temp_reading
+    # round to lowest number
+    return math.floor(temp_reading)
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -127,8 +128,8 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task3(image_path, config):
     # TODO: Implement task 3 here
-    # for i in range(1, 8):
-    #     print(get_digit_num(f"data/task3/lcd5/d{i}.png"))
+    # for i in range(1, 4):
+    #     print(get_digit_num(f"output/task2/d{i}.png"))
     merc_reading = get_therm_reading(image_path)
     print(merc_reading)
     output_path = f"output/task3/result.txt"

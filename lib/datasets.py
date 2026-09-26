@@ -20,7 +20,13 @@ def get_rb_dataset():
 
 # returns n number of augmented images for given img
 # performs random rotation, scaling, and translation
-def augment_img(img_path, multiplier=5, rot=True, scale=False, trans=False):
+def augment_img(
+    img_path,
+    multiplier=5,
+    rot=(-15, 15),
+    scale=None,
+    trans=None,
+):
     img = cv2.imread(img_path)
     h, w = img.shape[:2]
 
@@ -29,18 +35,18 @@ def augment_img(img_path, multiplier=5, rot=True, scale=False, trans=False):
     for i in range(multiplier):
         # random rot, scale, trans
         angle = 0
-        scale = 1.0
+        scaled = 1.0
         tx = 0
         ty = 0
         if rot:
-            angle = np.random.uniform(-15, 15)
+            angle = np.random.uniform(rot[0], rot[1])
         if scale:
-            scale = np.random.uniform(0.9, 1.1)
+            scaled = np.random.uniform(scale[0], scale[1])
         if trans:
-            tx = np.random.uniform(-10, 10)
-            ty = np.random.uniform(-10, 10)
+            tx = np.random.uniform(trans[0], trans[1])
+            ty = np.random.uniform(trans[0], trans[1])
 
-        M_rot_s = cv2.getRotationMatrix2D((w / 2, h / 2), angle, scale)
+        M_rot_s = cv2.getRotationMatrix2D((w / 2, h / 2), angle, scaled)
 
         M_rot_s[0, 2] += tx
         M_rot_s[1, 2] += ty
@@ -73,7 +79,9 @@ def augment_imgs(img_dir, save_dir, multiplier=5):
         if not out_path.exists():
             out_path.mkdir(parents=True)
 
-        augmented_imgs = augment_img(img_path, multiplier=multiplier)
+        augmented_imgs = augment_img(
+            img_path, multiplier=multiplier, scale=(0.8, 1.2), trans=(-10, 10)
+        )
         # copy in original img
         shutil.copy(img_path, out_path / f"{folder_name}_0.png")
         for j, aug_img in enumerate(augmented_imgs):
@@ -94,8 +102,8 @@ def generate_digit_data():
     else:
         out_dir.mkdir(parents=True)
 
-    augment_imgs(lcd_digits, out_dir / "lcd", multiplier=10)
-    augment_imgs(therm_digits, out_dir / "therm", multiplier=10)
+    augment_imgs(lcd_digits, out_dir / "lcd", multiplier=15)
+    augment_imgs(therm_digits, out_dir / "therm", multiplier=15)
 
 
 def load_datasets():
