@@ -102,8 +102,8 @@ def generate_digit_data():
     else:
         out_dir.mkdir(parents=True)
 
-    augment_imgs(lcd_digits, out_dir / "lcd", multiplier=15)
-    augment_imgs(therm_digits, out_dir / "therm", multiplier=15)
+    augment_imgs(lcd_digits, out_dir / "lcd", multiplier=10)
+    augment_imgs(therm_digits, out_dir / "therm", multiplier=10)
 
 
 def load_datasets():

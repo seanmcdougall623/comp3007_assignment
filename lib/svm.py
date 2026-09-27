@@ -71,6 +71,12 @@ def train_svm(
     # create labels and reshape to 1d array
     train_data = np.reshape(train_data, (digit_count * data_count, size))
 
+    # normalise the data
+    mean = np.mean(train_data, axis=0)
+    std = np.std(train_data, axis=0)
+    # avoid div by 0
+    std[std == 0] = 1.0
+    train_data = (train_data - mean) / std
     # create and train the model!
 
     model = cv2.ml.SVM_create()
@@ -80,6 +86,11 @@ def train_svm(
     model.train(train_data, cv2.ml.ROW_SAMPLE, train_labels)
 
     model.save(model_dir)
+
+    # save the noramlisation consts!
+    with open(model_dir.with_suffix(".txt"), "w") as f:
+        f.write(f"{mean.tolist()}\n")
+        f.write(f"{std.tolist()}\n")
 
 
 def train_bp():
@@ -114,7 +125,9 @@ def train_therm():
     )
 
 
-def test_digit(img_path, model_dir, size=(64, 64), loaded=False):
+def test_digit(
+    img_path, model_dir, size=(64, 64), loaded=False, mean=None, std=None
+):
     d_size = size[0] * size[1]
     digit = load_image(
         img_path,
@@ -125,6 +138,11 @@ def test_digit(img_path, model_dir, size=(64, 64), loaded=False):
 
     sample = np.array([digit], dtype=np.float32).reshape((1, d_size))
 
+    if mean is not None and std is not None:
+        # avoid div by 0
+        std[std == 0] = 1.0
+        sample = (sample - mean) / std
+
     _, pred = model.predict(sample)
 
     return int(pred[0][0])
@@ -132,12 +150,26 @@ def test_digit(img_path, model_dir, size=(64, 64), loaded=False):
 
 def test_bp_digit(img_path, loaded=False):
     model_dir = root_dir / "../models/bp_svm.xml"
-    return test_digit(img_path, model_dir, loaded=loaded)
+    with open(model_dir.with_suffix(".txt"), "r") as f:
+        mean = np.array(eval(f.readline().strip()), dtype=np.float32)
+        std = np.array(eval(f.readline().strip()), dtype=np.float32)
+    return test_digit(
+        img_path,
+        model_dir,
+        loaded=loaded,
+        mean=mean,
+        std=std,
+    )
 
 
 def test_therm_digit(img_path, loaded=False):
     model_dir = root_dir / "../models/therm_svm.xml"
-    return test_digit(img_path, model_dir, size=(32, 32), loaded=loaded)
+    with open(model_dir.with_suffix(".txt"), "r") as f:
+        mean = np.array(eval(f.readline().strip()), dtype=np.float32)
+        std = np.array(eval(f.readline().strip()), dtype=np.float32)
+    return test_digit(
+        img_path, model_dir, size=(32, 32), loaded=loaded, mean=mean, std=std
+    )
 
 
 if __name__ == "__main__":
