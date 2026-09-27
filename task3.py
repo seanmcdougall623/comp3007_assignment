@@ -39,7 +39,11 @@ def get_nearest_therm_digits(img):
     # can sometimes falsely include the shadow from the thermometer
     # just remove it
     if len(ref_cnt) > 4:
-        ref_cnt = ref_cnt[1:5]
+        # find contour which lies within 10px of left edge
+        for cnt in ref_cnt:
+            if cnt[0] <= 10:
+                ref_cnt.remove(cnt)
+                break
 
     # we'll have 4 contours, in order from top->bottom, l->r
     # take 1 and 3 as thats the digits we are interested in - other 2 are gonna be 0s and classifier doesn't need em

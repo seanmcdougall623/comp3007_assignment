@@ -56,8 +56,7 @@ def augment_img(
             M_rot_s,
             (w, h),
             flags=cv2.INTER_LINEAR,
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=[255, 255, 255],
+            borderMode=cv2.BORDER_REPLICATE,
         )
         out_img[i] = augmented_img
 
@@ -102,8 +101,10 @@ def generate_digit_data():
     else:
         out_dir.mkdir(parents=True)
 
-    augment_imgs(lcd_digits, out_dir / "lcd", multiplier=10)
-    augment_imgs(therm_digits, out_dir / "therm", multiplier=10)
+    multiplier = 10
+
+    augment_imgs(lcd_digits, out_dir / "lcd", multiplier=multiplier)
+    augment_imgs(therm_digits, out_dir / "therm", multiplier=multiplier)
 
 
 def load_datasets():
