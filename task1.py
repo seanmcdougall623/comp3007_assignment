@@ -141,14 +141,9 @@ def extract_item(img, bb, item_type):
 
 
 def run_task1(image_path, config):
-    out = identify_object(image_path)
-    if not out:
-        print("No valid object detected in the image.")
-        return
-
     inPath = Path(image_path)
     # iterate through folder
-    for file in inPath.parent.iterdir():
+    for file in inPath.iterdir():
         if file.is_file() and file.suffix.lower() in [
             ".jpg",
             ".jpeg",
@@ -162,11 +157,11 @@ def run_task1(image_path, config):
             num = file.stem.split("img")[-1]
             item = out[0]  # select first item as per task sheet
             out_img = extract_item(str(file), item[2], item[0])
-
-            output_path = f"output/task1/{item[0]}{num}.jpg"
+            f_name = ("lcd" if item[0] == "bp" else "thermo") + num
+            output_path = f"output/task1/{f_name}.jpg"
             save_output(output_path, out_img, output_type="image")
         else:
-            print(f"Skipping {file}, not a valid image file.")
+            print(f"Skipping {file.name}, not a valid image file.")
 
 
 # testing code

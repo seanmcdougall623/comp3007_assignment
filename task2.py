@@ -16,6 +16,7 @@
 
 import math
 import os
+from pathlib import Path
 
 import cv2
 
@@ -46,11 +47,13 @@ def find_lcd_digits(img, draw=False):
     return ref_cnt, img
 
 
-def export_lcd_digits(img, cnt, save_dir):
+def export_lcd_digits(img, cnt):
+    output = []
     for i, digit in enumerate(cnt):
         x, y, w, h = digit
         cropped_img = img[y : y + h, x : x + w]
-        cv2.imwrite(save_dir + f"d{i+1}.png", cropped_img)
+        output.append(cropped_img)
+    return output
 
 
 def find_thermo_section(img):
@@ -115,10 +118,10 @@ def find_thermo_section(img):
     return box, img
 
 
-def extract_thermo_section(img, box, dir):
+def extract_thermo_section(img, box):
     x, y, w, h = box
     cropped_img = img[y : y + h, x : x + w]
-    cv2.imwrite(dir + "t.png", cropped_img)
+    return cropped_img
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -137,18 +140,29 @@ def save_output(output_path, content, output_type="txt"):
 
 
 def run_task2(image_path, config):
-    # TODO: Implement task 2 here
-    # ref_cnt, img = find_lcd_digits(image_path, draw=False)
-    # export_lcd_digits(img, ref_cnt, "output/task2/")
-    box, img = find_thermo_section(image_path)
-    extract_thermo_section(img, box, "output/task2/")
-    # cv2.imshow("output", img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    inPath = Path(image_path)
 
-    # output_path = "output/task2/result.txt"
-    # save_output(output_path, "Task 2 output", output_type="txt")
+    for file in inPath.iterdir():
+        if file.is_file() and file.suffix in [".jpg", "jpeg", ".png"]:
+            # name is either gonna be lcd or thermo, so just check first 3 chars
+            f_name = file.stem
+            if f_name[:3] == "lcd":
+                ref_cnt, img = find_lcd_digits(file, draw=False)
+                out = export_lcd_digits(img, ref_cnt, "output/task2/")
+                for i, digit_img in enumerate(out):
+                    output_path = f"output/task2/{f_name}/d{i + 1}.jpg"
+                    save_output(output_path, digit_img, output_type="image")
+            elif f_name[:3] == "the":
+                box, img = find_thermo_section(file)
+                out = extract_thermo_section(img, box, "output/task2/")
+                save_output(
+                    "output/task2/{f_name}/t.jpg", out, output_type="image"
+                )
+
+        else:
+            print(f"Skipping {file.name}, not a valid image file.")
 
 
+# debug purposes
 if __name__ == "__main__":
     run_task2("./output/task1/therm_cropped.png", None)
