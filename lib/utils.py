@@ -180,6 +180,57 @@ def resize(img, dims):
     return cv2.resize(img, (tar_w, tar_h), cv2.INTER_AREA)
 
 
+def correct_skew(img, bb):
+
+    # order in l->r, t->b
+    # in case hasn't been done yet
+    corners = order_corners(bb)
+
+    tl, tr, br, bl = corners
+    # implementation inspired by https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
+    # use linalg normalisation cuz thats less words
+    widthA = np.linalg.norm(br - bl)
+    widthB = np.linalg.norm(tr - tl)
+    max_width = max(int(widthA), int(widthB))
+
+    heightA = np.linalg.norm(tr - br)
+    heightB = np.linalg.norm(tl - bl)
+    max_height = max(int(heightA), int(heightB))
+
+    dst = np.array(
+        [
+            [0, 0],
+            [max_width - 1, 0],
+            [max_width - 1, max_height - 1],
+            [0, max_height - 1],
+        ],
+        dtype="float32",
+    )
+
+    M = cv2.getPerspectiveTransform(corners, dst)
+    warped = cv2.warpPerspective(img, M, (max_width, max_height))
+
+    return warped, M
+
+
+# TODO: ref AI code
+def pad_bb(bb, px=50, py=50):
+    tl, tr, br, bl = bb
+    width_dir = tr - tl
+    width_dir = width_dir / np.linalg.norm(width_dir)
+    height_dir = bl - tl
+    height_dir = height_dir / np.linalg.norm(height_dir)
+    return np.array(
+        [
+            tl - width_dir * px - height_dir * py,
+            tr + width_dir * px - height_dir * py,
+            br + width_dir * px + height_dir * py,
+            bl - width_dir * px + height_dir * py,
+        ],
+        dtype=np.float32,
+    )
+
+
 # calculates the digit from some lcd segment mathemtically
 # much more robust, not allowed by assignment guidelines :(
 # using as backup plan if classifier doesn't work

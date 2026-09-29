@@ -15,12 +15,13 @@
 # Last Modified: 2024-09-09
 
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
 from ultralytics import YOLO
 
-from lib.utils import order_corners
+from lib.utils import correct_skew, order_corners, pad_bb
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -38,8 +39,11 @@ def save_output(output_path, content, output_type="txt"):
         print("Unsupported output type. Use 'txt' or 'image'.")
 
 
-def identify_object(img_path):
-    img = cv2.imread(img_path)
+def identify_object(img_path, loaded=False):
+    if not loaded:
+        img = cv2.imread(img_path)
+    else:
+        img = img_path
 
     model = YOLO("models/bp_therm_ident.pt")
 
@@ -65,38 +69,19 @@ def extract_item(img, bb, item_type):
     # load in image
     img = cv2.imread(img)
 
-    # convert to np and order in l->r, t->b
-    corners = order_corners(
-        np.array(bb.cpu().numpy(), dtype=np.float32).reshape(4, 2)
-    )
+    bb = np.array(bb.cpu().numpy(), dtype=np.float32).reshape(4, 2)
 
-    tl, tr, br, bl = corners
-    # implementation inspired by https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
-    # use linalg normalisation cuz thats less words
-    widthA = np.linalg.norm(br - bl)
-    widthB = np.linalg.norm(tr - tl)
-    max_width = max(int(widthA), int(widthB))
+    bb = order_corners(bb)
 
-    heightA = np.linalg.norm(tr - br)
-    heightB = np.linalg.norm(tl - bl)
-    max_height = max(int(heightA), int(heightB))
+    # add 50px padding so we can rotate cleanly
+    px = 50
+    py = 50
+    padded_bb = pad_bb(bb, px=px, py=py)
 
-    dst = np.array(
-        [
-            [0, 0],
-            [max_width - 1, 0],
-            [max_width - 1, max_height - 1],
-            [0, max_height - 1],
-        ],
-        dtype="float32",
-    )
+    warped, H = correct_skew(img, padded_bb)
 
-    M = cv2.getPerspectiveTransform(corners, dst)
-    warped = cv2.warpPerspective(img, M, (max_width, max_height))
-
-    # rotate if we aren't as expected
-    if warped.shape[1] > warped.shape[0] and item_type == "therm":
-        warped = cv2.rotate(warped, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    # track points for crop later
+    pts = cv2.perspectiveTransform(bb.reshape(1, 4, 2), H).reshape(4, 2)
 
     # after skewing, image can sometimes not be perfectly flat
     # use hough transformation to ensure flat as possible
@@ -111,7 +96,7 @@ def extract_item(img, bb, item_type):
     lines = cv2.HoughLines(edges, 1, np.pi / 360, threshold=threshold)
 
     # find LCD screen lines if bp, otherwise grab a few mercury lines
-    max_lines = 4 if item_type == "bp" else 6
+    max_lines = 4 if item_type == "bp" else 8
 
     # clean up this code cause it kinda aaa
     angles = []
@@ -133,28 +118,46 @@ def extract_item(img, bb, item_type):
         M,
         (w, h),
         flags=cv2.INTER_CUBIC,
-        borderMode=cv2.BORDER_REPLICATE,
+        borderMode=cv2.BORDER_CONSTANT,
     )
 
-    # cv2.imshow("Cropped BP", out)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    h, w = out.shape[:2]
 
-    cv2.imwrite(f"output/task1/{item_type}_cropped.png", out)
+    pts = cv2.transform(pts.reshape(1, 4, 2), M).reshape(4, 2)
+
+    # work out whether we've exceeded bounds of the image and map accordingly
+    x0, y0 = pts.min(axis=0)
+    x1, y1 = pts.max(axis=0)
+    x0, y0 = max(int(x0), 0), max(int(y0), 0)
+    x1, y1 = min(int(x1), w), min(int(y1), h)
+    out = out[y0:y1, x0:x1]
+
+    # rotate if we aren't as expected
+    # short side always at bottom
+    if out.shape[1] > out.shape[0]:
+        out = cv2.rotate(out, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    return out
 
 
 def run_task1(image_path, config):
     out = identify_object(image_path)
-    for item in out:
-        # TODO: decide whether to just use one function for both cause it seems pretty stable
-        if not item:
-            print("No valid object detected in the image.")
-            return
-        extract_item(image_path, item[2], item[0])
+    if not out:
+        print("No valid object detected in the image.")
+        return
 
-    # output_path = f"output/task1/result.txt"
-    # save_output(output_path, "Task 1 output", output_type="txt")
+    # set out dir name
+    inPath = Path(image_path)
+    name = inPath.stem
+    num = name.split("img")[-1]
+
+    item = out[0]  # select first item as per task sheet
+    out_img = extract_item(image_path, item[2], item[0])
+
+    output_path = f"output/task1/{item[0]}{num}.jpg"
+    save_output(output_path, out_img, output_type="image")
 
 
+# testing code
 if __name__ == "__main__":
-    run_task1("./data/task1/img9.jpg", None)
+    run_task1("./data/task1/img3.jpg", None)
