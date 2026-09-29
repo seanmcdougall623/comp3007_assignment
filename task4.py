@@ -21,7 +21,7 @@ import cv2
 
 from task1 import extract_item, identify_object
 from task2 import (
-    export_lcd_digits,
+    extract_lcd_digits,
     extract_thermo_section,
     find_lcd_digits,
     find_thermo_section,
@@ -46,7 +46,7 @@ def save_output(output_path, content, output_type="txt"):
 
 def run_task4(image_path, config):
     input_path = Path(image_path)
-    for file in input_path.iterdir():
+    for file in sorted(input_path.iterdir()):
         if file.is_file() and file.suffix.lower() in [
             ".jpg",
             ".jpeg",
@@ -58,34 +58,37 @@ def run_task4(image_path, config):
                 continue
             item = out[0]
 
+            print(
+                f"Identified {item[0]} in {file.name} with confidence {item[1]:.2f}"
+            )
+
             extracted_img = extract_item(file, item[2], item[0])
 
-            if item[0] == "lcd":
-                ref_cnt, img = find_lcd_digits(extracted_img)
-                d_out = export_lcd_digits(img, ref_cnt, "output/task2/")
+            if item[0] == "bp":
+                ref_cnt, img = find_lcd_digits(
+                    extracted_img, loaded=True, draw=False
+                )
+                d_out = extract_lcd_digits(img, ref_cnt)
 
                 readings = []
 
                 for digit in d_out:
-                    num = get_digit_num(digit)
-                    readings.append(num)
-
-                if len(readings) != 5:
+                    num = get_digit_num(digit, loaded=True)
+                    readings.append(str(num))
+                if len(readings) != 7:
                     print(
-                        f"Warning: Expected 5 readings, got {len(readings)} for {file.name}."
+                        f"Warning: Expected 7 readings, got {len(readings)} for {file.name}."
                     )
 
                 output_path = f"output/task4/{file.stem}.txt"
-                txt_out = (
-                    f"bpm {readings[0:2]}, {readings[2:3]}, {readings[3:4]}"
-                )
+                txt_out = f"bpm {''.join(readings[0:3])}, {''.join(readings[3:5])}, {''.join(readings[5:7])}"
 
                 save_output(output_path, txt_out, output_type="txt")
 
-            elif item[0] == "thermo":
-                box, img = find_thermo_section(extracted_img)
-                t_out = extract_thermo_section(img, box, "output/task2/")
-                reading = get_therm_reading(t_out)
+            elif item[0] == "therm":
+                box, img = find_thermo_section(extracted_img, loaded=True)
+                t_out = extract_thermo_section(img, box)
+                reading = get_therm_reading(t_out, loaded=True)
 
                 output_path = f"output/task4/{file.stem}.txt"
                 txt_out = f"temp {reading}"
@@ -94,3 +97,8 @@ def run_task4(image_path, config):
 
         else:
             print(f"Skipping {file.name}, not a valid image file.")
+
+
+# debug purposes
+if __name__ == "__main__":
+    run_task4("data/task1/ind", None)

@@ -73,12 +73,12 @@ def extract_item(img, bb, item_type):
 
     bb = order_corners(bb)
 
-    # add 50px padding so we can rotate cleanly
-    px = 50
-    py = 50
-    padded_bb = pad_bb(bb, px=px, py=py)
+    # # add 50px padding so we can rotate cleanly
+    # px = 50
+    # py = 50
+    # padded_bb = pad_bb(bb, px=px, py=py)
 
-    warped, H = correct_skew(img, padded_bb)
+    warped, H = correct_skew(img, bb)
 
     # track points for crop later
     pts = cv2.perspectiveTransform(bb.reshape(1, 4, 2), H).reshape(4, 2)
@@ -118,7 +118,7 @@ def extract_item(img, bb, item_type):
         M,
         (w, h),
         flags=cv2.INTER_CUBIC,
-        borderMode=cv2.BORDER_CONSTANT,
+        borderMode=cv2.BORDER_REPLICATE,
     )
 
     h, w = out.shape[:2]

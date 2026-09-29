@@ -28,13 +28,19 @@ from lib.utils import (
 )
 
 
-def find_lcd_digits(img, draw=False):
+def find_lcd_digits(img, draw=False, loaded=False):
     # processings
-    img = cv2.imread(img)
+    if not loaded:
+        img = cv2.imread(img)
     pre_img = preprocess_image(img, resize=False)
 
     ref_cnt = extract_digits(
-        pre_img, kernel_size=(7, 7), area_threshold=1000, draw=draw
+        pre_img,
+        kernel_size=(7, 7),
+        threshold1=50,
+        threshold2=150,
+        area_threshold=1000,
+        draw=draw,
     )
 
     # only draw if we wanna see the output
@@ -47,17 +53,21 @@ def find_lcd_digits(img, draw=False):
     return ref_cnt, img
 
 
-def export_lcd_digits(img, cnt):
+def extract_lcd_digits(img, cnt, out_dir=None):
     output = []
     for i, digit in enumerate(cnt):
         x, y, w, h = digit
         cropped_img = img[y : y + h, x : x + w]
+        if out_dir:
+            output_path = os.path.join(out_dir, f"d{i + 1}.png")
+            cv2.imwrite(output_path, cropped_img)
         output.append(cropped_img)
     return output
 
 
-def find_thermo_section(img):
-    img = cv2.imread(img)
+def find_thermo_section(img, loaded=False):
+    if not loaded:
+        img = cv2.imread(img)
 
     img_h, img_w, _ = img.shape
 
@@ -118,9 +128,12 @@ def find_thermo_section(img):
     return box, img
 
 
-def extract_thermo_section(img, box):
+def extract_thermo_section(img, box, out_dir=None):
     x, y, w, h = box
     cropped_img = img[y : y + h, x : x + w]
+    if out_dir:
+        cv2.imwrite("t.png", cropped_img)
+
     return cropped_img
 
 
@@ -148,13 +161,13 @@ def run_task2(image_path, config):
             f_name = file.stem
             if f_name[:3] == "lcd":
                 ref_cnt, img = find_lcd_digits(file, draw=False)
-                out = export_lcd_digits(img, ref_cnt, "output/task2/")
+                out = extract_lcd_digits(img, ref_cnt)
                 for i, digit_img in enumerate(out):
                     output_path = f"output/task2/{f_name}/d{i + 1}.jpg"
                     save_output(output_path, digit_img, output_type="image")
             elif f_name[:3] == "the":
                 box, img = find_thermo_section(file)
-                out = extract_thermo_section(img, box, "output/task2/")
+                out = extract_thermo_section(img, box)
                 save_output(
                     "output/task2/{f_name}/t.jpg", out, output_type="image"
                 )
@@ -165,4 +178,5 @@ def run_task2(image_path, config):
 
 # debug purposes
 if __name__ == "__main__":
-    run_task2("./output/task1/therm_cropped.png", None)
+    ref_cnt, img = find_lcd_digits("data/task2/lcd5.png")
+    extract_lcd_digits(img, ref_cnt, "output/task2/")

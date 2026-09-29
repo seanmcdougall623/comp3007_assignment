@@ -19,6 +19,9 @@ root_dir = Path(os.path.dirname(__file__))
 def load_image(img, size, loaded=False):
     if not loaded:
         img = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
+    # cvt grayscale if not alr
+    elif len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # resize to reduce feature length
     img = resize(img, size)

@@ -59,6 +59,9 @@ def extract_digits(
     draw=False,
     area_threshold=2000,
 ):
+    # gaussian
+    img = cv2.GaussianBlur(img, (5, 5), 0)
+
     # thresholding
     img_edges = cv2.Canny(img, threshold1, threshold2)
 
@@ -70,13 +73,23 @@ def extract_digits(
         img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
 
+    img_w, img_h = img.shape[1], img.shape[0]
+
     ref_cnt = []
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         area = w * h
         # check if sufficiently big, and rectangular shape
-        if area > area_threshold and (w * 1.3 < h):
+        if (
+            area > area_threshold
+            and (w * 1.3 < h)
+            # ignore anything super big as probs false positive
+            and area < 0.5 * img_w * img_h
+            # ignore anything too close to left and right
+            and x > 0.05 * img_w
+            and x + w < img_w - 0.05 * img_w
+        ):
             # if we want to draw use direct contour approximation
             # used for drawing the output if required
             if draw:

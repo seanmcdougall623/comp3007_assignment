@@ -24,8 +24,8 @@ from lib.svm import test_bp_digit, test_therm_digit
 from lib.utils import extract_red, extract_therm_digits
 
 
-def get_digit_num(img_path):
-    return test_bp_digit(img_path)
+def get_digit_num(img_path, loaded=False):
+    return test_bp_digit(img_path, loaded)
 
 
 # template match to find the nearest digits
@@ -80,8 +80,9 @@ def get_nearest_therm_digits(img):
 
 # take top and bottom value, then ranging will be fixed
 # mercury value will just be fixed spacing and we can calculate from there
-def get_therm_reading(img):
-    img = cv2.imread(img)
+def get_therm_reading(img, loaded=False):
+    if not loaded:
+        img = cv2.imread(img)
     digits = get_nearest_therm_digits(img)
 
     # don't need x values just y value and digit value
@@ -176,4 +177,6 @@ def run_task3(image_path, config):
 
 # debug purposes
 if __name__ == "__main__":
-    run_task3("output/task2/t.png", None)
+    img_path = "output/task2/"
+    for img in sorted(Path(img_path).iterdir()):
+        print(get_digit_num(img))
