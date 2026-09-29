@@ -65,7 +65,7 @@ def get_nearest_therm_digits(img):
         d2 = output[1][0]
         if abs(d1 - d2) != 1 or d1 < d2:
             # use closest positive digit to 0 as probs the correct one
-            truth = min(x for x in [d1, d2] if x > 0)
+            truth = min(x for x in [d1, d2] if x >= 0)
             print(
                 f"Misclassficiation detected! Received {d1} and {d2}. Using {truth} as ground truth"
             )

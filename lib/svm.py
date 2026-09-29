@@ -27,9 +27,15 @@ def load_image(img, size, loaded=False):
     img = resize(img, size)
     blur = cv2.GaussianBlur(img, (3, 3), 0)
     # threshold just to remove the segment noise or any light pollution
-    digit = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[
-        1
-    ]
+    digit = cv2.threshold(
+        blur, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU
+    )[1]
+    # dilate slightly
+    digit = cv2.dilate(digit, np.ones((2, 2), np.uint8), iterations=1)
+
+    # cv2.imshow("Digit", digit)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     return digit
 
@@ -89,11 +95,11 @@ def train_bp():
 def train_therm():
     img_dir = root_dir / "../datasets/task3/therm"
     model_dir = root_dir / "../models/therm_svm.xml"
-    loaded_images, loaded_labels = load_images(img_dir, size=(32, 32))
+    loaded_images, loaded_labels = load_images(img_dir, size=(64, 64))
     train_svm(
         loaded_images,
         loaded_labels,
-        32 * 32,
+        64 * 64,
         model_dir,
     )
 
@@ -105,6 +111,11 @@ def test_digit(img_path, model_dir, size=(64, 64), loaded=False):
         size,
         loaded=loaded,
     )
+
+    # cv2.imshow("Digit", digit)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
     model = cv2.ml.SVM_load(model_dir)
 
     sample = np.array([digit], dtype=np.float32).reshape((1, d_size))
@@ -125,13 +136,13 @@ def test_bp_digit(img_path, loaded=False):
 
 def test_therm_digit(img_path, loaded=False):
     model_dir = root_dir / "../models/therm_svm.xml"
-    return test_digit(img_path, model_dir, size=(32, 32), loaded=loaded)
+    return test_digit(img_path, model_dir, size=(64, 64), loaded=loaded)
 
 
 if __name__ == "__main__":
     train_bp()
     train_therm()
     bp = test_bp_digit(os.getcwd() + "/output/task2/d2.png")
-    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/1.png")
+    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/3.png")
     print(bp)
     print(therm)

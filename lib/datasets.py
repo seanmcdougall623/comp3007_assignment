@@ -21,11 +21,7 @@ def get_rb_dataset():
 # returns n number of augmented images for given img
 # performs random rotation, scaling, and translation
 def augment_img(
-    img_path,
-    multiplier=5,
-    rot=(-15, 15),
-    scale=None,
-    trans=None,
+    img_path, multiplier=5, rot=(-15, 15), scale=None, trans=None, skew=None
 ):
     img = cv2.imread(img_path)
     h, w = img.shape[:2]
@@ -38,6 +34,8 @@ def augment_img(
         scaled = 1.0
         tx = 0
         ty = 0
+        sx = 1
+        sy = 1
         if rot:
             angle = np.random.uniform(rot[0], rot[1])
         if scale:
@@ -56,8 +54,25 @@ def augment_img(
             M_rot_s,
             (w, h),
             flags=cv2.INTER_LINEAR,
-            borderMode=cv2.BORDER_REPLICATE,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(0, 0, 0),
         )
+
+        if skew:
+            sx = np.random.uniform(skew[0], skew[1])
+            sy = np.random.uniform(skew[0], skew[1])
+
+            M = np.array([[1, sx, 0], [sy, 1, 0]], dtype=np.float32)
+
+            augmented_img = cv2.warpAffine(
+                augmented_img,
+                M,
+                (w, h),
+                flags=cv2.INTER_LINEAR,
+                borderMode=cv2.BORDER_CONSTANT,
+                borderValue=(0, 0, 0),
+            )
+
         out_img[i] = augmented_img
 
     return out_img
@@ -79,7 +94,10 @@ def augment_imgs(img_dir, save_dir, multiplier=5):
             out_path.mkdir(parents=True)
 
         augmented_imgs = augment_img(
-            img_path, multiplier=multiplier, scale=(0.8, 1.2), trans=(-10, 10)
+            img_path,
+            multiplier=multiplier,
+            scale=(0.8, 1.0),
+            skew=(-0.1, 0.1),
         )
         # copy in original img
         shutil.copy(img_path, out_path / f"{folder_name}_0.png")

@@ -64,6 +64,8 @@ def run_task4(image_path, config):
 
             extracted_img = extract_item(file, item[2], item[0])
 
+            txt_out = ""
+
             if item[0] == "bp":
                 ref_cnt, img = find_lcd_digits(
                     extracted_img, loaded=True, draw=False
@@ -82,7 +84,6 @@ def run_task4(image_path, config):
 
                 output_path = f"output/task4/{file.stem}.txt"
                 txt_out = f"bpm {''.join(readings[0:3])}, {''.join(readings[3:5])}, {''.join(readings[5:7])}"
-
                 save_output(output_path, txt_out, output_type="txt")
 
             elif item[0] == "therm":
@@ -95,10 +96,12 @@ def run_task4(image_path, config):
 
                 save_output(output_path, txt_out, output_type="txt")
 
+            print(f"Output for {file.name}: {txt_out}")
+
         else:
             print(f"Skipping {file.name}, not a valid image file.")
 
 
 # debug purposes
 if __name__ == "__main__":
-    run_task4("data/task1/ind", None)
+    run_task4("data/task1/extended", None)

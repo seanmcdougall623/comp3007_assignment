@@ -172,7 +172,7 @@ def extract_red(loaded_img, a_filt=130):
 # look the SVM can probably learn it but better safe than sorry
 # @param img - loaded cv2 img
 # @param dims - (w,h) of target sizing
-def resize(img, dims):
+def resize(img, dims, width=True, height=False):
     tar_w, tar_h = dims
 
     h, w = img.shape
@@ -181,10 +181,10 @@ def resize(img, dims):
         pad_w = max(0, tar_w - w)
 
         # center padding
-        top = pad_h // 2
-        bottom = pad_h - top
-        left = pad_w // 2
-        right = pad_w - left
+        top = pad_h // 2 if height else 0
+        bottom = pad_h - top if height else 0
+        left = pad_w // 2 if width else 0
+        right = pad_w - left if width else 0
 
         img = cv2.copyMakeBorder(
             img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=255
