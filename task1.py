@@ -146,16 +146,27 @@ def run_task1(image_path, config):
         print("No valid object detected in the image.")
         return
 
-    # set out dir name
     inPath = Path(image_path)
-    name = inPath.stem
-    num = name.split("img")[-1]
+    # iterate through folder
+    for file in inPath.parent.iterdir():
+        if file.is_file() and file.suffix.lower() in [
+            ".jpg",
+            ".jpeg",
+            ".png",
+        ]:
+            out = identify_object(str(file))
+            if not out:
+                print(f"No valid object detected in {file}.")
+                continue
 
-    item = out[0]  # select first item as per task sheet
-    out_img = extract_item(image_path, item[2], item[0])
+            num = file.stem.split("img")[-1]
+            item = out[0]  # select first item as per task sheet
+            out_img = extract_item(str(file), item[2], item[0])
 
-    output_path = f"output/task1/{item[0]}{num}.jpg"
-    save_output(output_path, out_img, output_type="image")
+            output_path = f"output/task1/{item[0]}{num}.jpg"
+            save_output(output_path, out_img, output_type="image")
+        else:
+            print(f"Skipping {file}, not a valid image file.")
 
 
 # testing code
