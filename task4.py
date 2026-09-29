@@ -1,5 +1,3 @@
-
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,16 +15,28 @@
 # Last Modified: 2024-09-09
 
 import os
+from pathlib import Path
+
+import cv2
+
+from task1 import extract_item, identify_object
+from task2 import (
+    export_lcd_digits,
+    extract_thermo_section,
+    find_lcd_digits,
+    find_thermo_section,
+)
+from task3 import get_digit_num, get_therm_reading
 
 
-def save_output(output_path, content, output_type='txt'):
+def save_output(output_path, content, output_type="txt"):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
-    if output_type == 'txt':
-        with open(output_path, 'w') as f:
+
+    if output_type == "txt":
+        with open(output_path, "w") as f:
             f.write(content)
         print(f"Text file saved at: {output_path}")
-    elif output_type == 'image':
+    elif output_type == "image":
         # Assuming 'content' is a valid image object, e.g., from OpenCV
         cv2.imwrite(output_path, content)
         print(f"Image saved at: {output_path}")
@@ -35,6 +45,52 @@ def save_output(output_path, content, output_type='txt'):
 
 
 def run_task4(image_path, config):
-    # TODO: Implement task 4 here
-    output_path = f"output/task4/result.txt"
-    save_output(output_path, "Task 4 output", output_type='txt')
+    input_path = Path(image_path)
+    for file in input_path.iterdir():
+        if file.is_file() and file.suffix.lower() in [
+            ".jpg",
+            ".jpeg",
+            ".png",
+        ]:
+            out = identify_object(file)
+            if not out:
+                print(f"Skipping {file.name}, no identifiable item found.")
+                continue
+            item = out[0]
+
+            extracted_img = extract_item(file, item[2], item[0])
+
+            if item[0] == "lcd":
+                ref_cnt, img = find_lcd_digits(extracted_img)
+                d_out = export_lcd_digits(img, ref_cnt, "output/task2/")
+
+                readings = []
+
+                for digit in d_out:
+                    num = get_digit_num(digit)
+                    readings.append(num)
+
+                if len(readings) != 5:
+                    print(
+                        f"Warning: Expected 5 readings, got {len(readings)} for {file.name}."
+                    )
+
+                output_path = f"output/task4/{file.stem}.txt"
+                txt_out = (
+                    f"bpm {readings[0:2]}, {readings[2:3]}, {readings[3:4]}"
+                )
+
+                save_output(output_path, txt_out, output_type="txt")
+
+            elif item[0] == "thermo":
+                box, img = find_thermo_section(extracted_img)
+                t_out = extract_thermo_section(img, box, "output/task2/")
+                reading = get_therm_reading(t_out)
+
+                output_path = f"output/task4/{file.stem}.txt"
+                txt_out = f"temp {reading}"
+
+                save_output(output_path, txt_out, output_type="txt")
+
+        else:
+            print(f"Skipping {file.name}, not a valid image file.")

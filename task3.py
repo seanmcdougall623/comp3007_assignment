@@ -21,7 +21,7 @@ from pathlib import Path
 import cv2
 
 from lib.svm import test_bp_digit, test_therm_digit
-from lib.utils import extract_digits, extract_red, extract_therm_digits
+from lib.utils import extract_red, extract_therm_digits
 
 
 def get_digit_num(img_path):
