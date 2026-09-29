@@ -16,6 +16,7 @@
 
 import math
 import os
+from pathlib import Path
 
 import cv2
 
@@ -131,14 +132,48 @@ def save_output(output_path, content, output_type="txt"):
 
 
 def run_task3(image_path, config):
-    # TODO: Implement task 3 here
-    # for i in range(1, 4):
-    #     print(get_digit_num(f"output/task2/d{i}.png"))
-    merc_reading = get_therm_reading(image_path)
-    print(merc_reading)
-    output_path = f"output/task3/result.txt"
-    save_output(output_path, "Task 3 output", output_type="txt")
+    inPath = Path(image_path)
+
+    for folder in inPath.iterdir():
+        if folder.is_dir():
+            if folder.name.startswith("lcd"):
+                for file in folder.iterdir():
+                    if file.is_file() and file.suffix in [
+                        ".jpg",
+                        "jpeg",
+                        ".png",
+                    ]:
+                        digit = get_digit_num(file)
+                        output_path = (
+                            f"output/task3/{folder.name}/{file.stem}.txt"
+                        )
+                        save_output(output_path, digit, output_type="txt")
+                    else:
+                        print(
+                            f"Skipping {file.name}, not a valid image file."
+                        )
+            elif folder.name.startswith("thermo"):
+                for file in folder.iterdir():
+                    if file.is_file() and file.suffix in [
+                        ".jpg",
+                        "jpeg",
+                        ".png",
+                    ]:
+                        reading = get_therm_reading(file)
+                        output_path = (
+                            f"output/task3/{folder.name}/{file.stem}.txt"
+                        )
+                        save_output(output_path, reading, output_type="txt")
+                    else:
+                        print(
+                            f"Skipping {file.name}, not a valid image file."
+                        )
+            else:
+                print(f"Skipping {folder.name}, not a valid image folder.")
+        else:
+            print(f"Skipping {folder.name}, not a folder.")
 
 
+# debug purposes
 if __name__ == "__main__":
     run_task3("output/task2/t.png", None)
