@@ -34,12 +34,14 @@ def find_lcd_digits(img, draw=False, loaded=False):
         img = cv2.imread(img)
     pre_img = preprocess_image(img, resize=False)
 
+    h, w = pre_img.shape
+
     ref_cnt = extract_digits(
         pre_img,
         kernel_size=(7, 7),
-        threshold1=50,
-        threshold2=150,
-        area_threshold=1000,
+        threshold1=5,
+        threshold2=90,
+        area_threshold=h * w // 500,
         draw=draw,
     )
 
@@ -59,7 +61,7 @@ def extract_lcd_digits(img, cnt, out_dir=None):
         x, y, w, h = digit
         cropped_img = img[y : y + h, x : x + w]
         if out_dir:
-            output_path = os.path.join(out_dir, f"d{i + 1}.png")
+            output_path = os.path.join(out_dir, f"d{i + 1}.jpg")
             cv2.imwrite(output_path, cropped_img)
         output.append(cropped_img)
     return output
@@ -68,7 +70,8 @@ def extract_lcd_digits(img, cnt, out_dir=None):
 def find_thermo_section(img, loaded=False):
     if not loaded:
         img = cv2.imread(img)
-
+    else:
+        img = img.copy()
     img_h, img_w, _ = img.shape
 
     # approach is to look for red line as thats only thing consistent
@@ -132,7 +135,7 @@ def extract_thermo_section(img, box, out_dir=None):
     x, y, w, h = box
     cropped_img = img[y : y + h, x : x + w]
     if out_dir:
-        cv2.imwrite("t.png", cropped_img)
+        cv2.imwrite(os.path.join(out_dir, "t.jpg"), cropped_img)
 
     return cropped_img
 
@@ -178,5 +181,9 @@ def run_task2(image_path, config):
 
 # debug purposes
 if __name__ == "__main__":
-    ref_cnt, img = find_lcd_digits("data/task2/lcd5.png")
+    # !! uncomment for BP !!
+    ref_cnt, img = find_lcd_digits("output/task1/lcd7.jpg", draw=False)
     extract_lcd_digits(img, ref_cnt, "output/task2/")
+    # !! uncomment for therm !!
+    # box, img = find_thermo_section("output/task1/therm6.jpg")
+    # extract_thermo_section(img, box, "output/task2/")

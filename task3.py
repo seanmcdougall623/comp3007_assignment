@@ -21,7 +21,7 @@ from pathlib import Path
 import cv2
 
 from lib.svm import test_bp_digit, test_therm_digit
-from lib.utils import extract_red, extract_therm_digits
+from lib.utils import check_negative, extract_red, extract_therm_digits
 
 
 def get_digit_num(img_path, loaded=False):
@@ -37,20 +37,31 @@ def get_nearest_therm_digits(img):
         img, area_threshold_scale=50, draw=False
     )
 
+    # check to see if any numbers are negative (small horizontal feature)
+    neg = check_negative(third_img, draw=False)
+
     # can sometimes falsely include the shadow from the thermometer
     # just remove it
     if len(ref_cnt) > 4:
-        # find contour which lies within 10px of left edge
+        # only keep contours that are in the right side of the image, as the shadow is on the left
         for cnt in ref_cnt:
-            if cnt[0] <= 10:
+            if cnt[0] <= 0.25 * third_img.shape[1]:
                 ref_cnt.remove(cnt)
                 break
 
-    # we'll have 4 contours, in order from top->bottom, l->r
-    # take 1 and 3 as thats the digits we are interested in - other 2 are gonna be 0s and classifier doesn't need em
-    digits = [ref_cnt[0], ref_cnt[2]]
-    output = []
+    # sometimes we can accidentally crop out our 0s when taking the left third
+    if len(ref_cnt) == 2:
+        digits = [ref_cnt[0], ref_cnt[1]]
+    # tricky edge case - which is the 0 and which is the digit?
+    # in this case pass through all values, and remove any 0s
+    elif len(ref_cnt) == 3:
+        digits = ref_cnt
+    elif len(ref_cnt) == 4:
+        # we'll have 4 contours, in order from top->bottom, l->r
+        # take 1 and 3 as thats the digits we are interested in - other 2 are gonna be 0s and classifier doesn't need em
+        digits = [ref_cnt[0], ref_cnt[2]]
 
+    output = []
     # classify them
     for digit in digits:
         x, y, w, h = digit
@@ -58,14 +69,23 @@ def get_nearest_therm_digits(img):
         num = test_therm_digit(d_img, loaded=True)
         output.append([num, x, y, w, h])
 
+    # remove any 0s if we just added
+    # ofc which is the right 0 (what if the thermometer reads 0?)
+    # then 0 will be in between
+    if len(output) == 3:
+        if output[1][0] == 0:
+            output.remove(output[1])
+        elif output[2][0] == 0:
+            output.remove(output[2])
+
     # sanity check in case misclassification
     # if we did misclassify just take the highest digit as ground truth bcz it seems to be more acccurate in testing
-    if len(output) >= 2:
+    if len(output) == 2:
         d1 = output[0][0]
         d2 = output[1][0]
         if abs(d1 - d2) != 1 or d1 < d2:
             # use closest positive digit to 0 as probs the correct one
-            truth = min(x for x in [d1, d2] if x >= 0)
+            truth = min(x for x in [d1, d2] if x > 0)
             print(
                 f"Misclassficiation detected! Received {d1} and {d2}. Using {truth} as ground truth"
             )
@@ -74,6 +94,12 @@ def get_nearest_therm_digits(img):
                 output[0][0] = truth + 1
             else:
                 output[1][0] = truth - 1
+
+    # if we have a negative sign, fix digits
+    if neg:
+        for digit in output:
+            if digit[0] > 0:
+                digit[0] = -digit[0]
 
     return output
 
@@ -94,6 +120,8 @@ def get_therm_reading(img, loaded=False):
         raise ValueError(
             f"Classification error! Received readings of {d1} and {d2}"
         )
+    else:
+        print(f"Received readings of {d1} and {d2}")
     # calculate px spacing
     # 1u = 0.5 degrees
     px_spacing = abs(y1 - y2) // 10
@@ -113,8 +141,12 @@ def get_therm_reading(img, loaded=False):
 
         start_reg += 1
 
-    # round to lowest number
-    return math.floor(temp_reading)
+    # round to lowest number and take 1 as seems to be consistently off by 1 in testing
+    # unless it takes us below the floor
+
+    floored = math.floor(temp_reading)
+
+    return floored - 1 if floored > d1 * 10 else floored
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -177,6 +209,14 @@ def run_task3(image_path, config):
 
 # debug purposes
 if __name__ == "__main__":
+    # !! uncomment for BP !!
     img_path = "output/task2/"
     for img in sorted(Path(img_path).iterdir()):
+        if img.name == "t.jpg":
+            continue
         print(get_digit_num(img))
+
+    # !! uncomment for therm !!
+    # img_path = "output/task2/"
+    # read = get_therm_reading(img_path + "t.jpg")
+    # print(read)

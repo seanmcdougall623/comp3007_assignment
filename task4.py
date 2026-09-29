@@ -87,8 +87,14 @@ def run_task4(image_path, config):
                 save_output(output_path, txt_out, output_type="txt")
 
             elif item[0] == "therm":
-                box, img = find_thermo_section(extracted_img, loaded=True)
+                # next to no clue why
+                # but thermometer extraction only works when it reads it in itself
+                # reading from the buffer doesn't seem to work as well
+                temp_out = f"output/task4/{file.stem}_temp.jpg"
+                cv2.imwrite(temp_out, extracted_img)
+                box, img = find_thermo_section(temp_out)
                 t_out = extract_thermo_section(img, box)
+                os.remove(temp_out)
                 reading = get_therm_reading(t_out, loaded=True)
 
                 output_path = f"output/task4/{file.stem}.txt"

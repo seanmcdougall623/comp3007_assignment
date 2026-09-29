@@ -120,11 +120,9 @@ def extract_therm_digits(img, area_threshold_scale=500, draw=False):
     # crop down to left hand third of image so we only get the digits in celsius
     third_img = b_w[:, : b_w.shape[1] // 3]
 
-    # copy and gaussian blur to reduce noise
-    filtered = cv2.GaussianBlur(third_img, (5, 5), 0)
-    h, w = filtered.shape
+    h, w = third_img.shape
     ref_cnt = extract_digits(
-        filtered,
+        third_img,
         kernel_size=(1, 1),
         area_threshold=h * w // area_threshold_scale,
         draw=draw,
@@ -138,6 +136,38 @@ def extract_therm_digits(img, area_threshold_scale=500, draw=False):
         cv2.destroyAllWindows()
 
     return ref_cnt, third_img
+
+
+# used to check if any digits are negative
+def check_negative(img, draw=False):
+    img = cv2.GaussianBlur(img, (5, 5), 0)
+    canny = cv2.Canny(img, 50, 150)
+
+    cnt = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[
+        0
+    ]
+
+    ref_cnt = []
+
+    for c in cnt:
+        x, y, w, h = cv2.boundingRect(c)
+        area = w * h
+        if area > 100 and w > 10 * h:
+            if draw:
+                ref_cnt.append(
+                    np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
+                )
+            else:
+                ref_cnt.append((x, y, w, h))
+
+    if draw:
+        cv2.drawContours(img, ref_cnt, -1, (0, 255, 0), 2)
+
+        cv2.imshow("Negative Sign", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return ref_cnt == 1
 
 
 # extracts coordinates of largest red region in image

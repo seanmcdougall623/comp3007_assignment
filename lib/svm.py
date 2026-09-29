@@ -24,7 +24,7 @@ def load_image(img, size, loaded=False):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # resize to reduce feature length
-    img = resize(img, size)
+    img = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
     blur = cv2.GaussianBlur(img, (3, 3), 0)
     # threshold just to remove the segment noise or any light pollution
     digit = cv2.threshold(
@@ -143,6 +143,6 @@ if __name__ == "__main__":
     train_bp()
     train_therm()
     bp = test_bp_digit(os.getcwd() + "/output/task2/d2.png")
-    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/3.png")
+    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/4.png")
     print(bp)
     print(therm)
