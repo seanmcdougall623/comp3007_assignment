@@ -21,7 +21,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
-from lib.utils import correct_skew, order_corners, pad_bb
+from lib.utils import correct_skew, order_corners
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -73,15 +73,7 @@ def extract_item(img, bb, item_type):
 
     bb = order_corners(bb)
 
-    # # add 50px padding so we can rotate cleanly
-    # px = 50
-    # py = 50
-    # padded_bb = pad_bb(bb, px=px, py=py)
-
-    warped, H = correct_skew(img, bb)
-
-    # track points for crop later
-    pts = cv2.perspectiveTransform(bb.reshape(1, 4, 2), H).reshape(4, 2)
+    warped, _ = correct_skew(img, bb)
 
     # after skewing, image can sometimes not be perfectly flat
     # use hough transformation to ensure flat as possible
@@ -122,15 +114,6 @@ def extract_item(img, bb, item_type):
     )
 
     h, w = out.shape[:2]
-
-    pts = cv2.transform(pts.reshape(1, 4, 2), M).reshape(4, 2)
-
-    # work out whether we've exceeded bounds of the image and map accordingly
-    x0, y0 = pts.min(axis=0)
-    x1, y1 = pts.max(axis=0)
-    x0, y0 = max(int(x0), 0), max(int(y0), 0)
-    x1, y1 = min(int(x1), w), min(int(y1), h)
-    out = out[y0:y1, x0:x1]
 
     # rotate if we aren't as expected
     # short side always at bottom
