@@ -90,7 +90,6 @@ def extract_item(img, bb, item_type):
     # find LCD screen lines if bp, otherwise grab a few mercury lines
     max_lines = 4 if item_type == "bp" else 8
 
-    # clean up this code cause it kinda aaa
     angles = []
     for _, theta in lines[:max_lines, 0]:
         # find angle of lines
