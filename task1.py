@@ -113,12 +113,33 @@ def extract_item(img, bb, item_type):
         borderMode=cv2.BORDER_REPLICATE,
     )
 
-    h, w = out.shape[:2]
+    out_h, out_w = out.shape[:2]
 
     # rotate if we aren't as expected
     # short side always at bottom
     if out.shape[1] > out.shape[0]:
         out = cv2.rotate(out, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    # crop into LCD screen
+
+    if item_type == "bp":
+        gray = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 50, 150)
+        cv2.dilate(edges, (7, 7), iterations=3)
+
+        cnt = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+
+        ref_cnt = []
+
+        for c in cnt:
+            x, y, w, h = cv2.boundingRect(c)
+            ref_cnt.append(((x, y, w, h), w * h))
+
+        max_area = max(ref_cnt, key=lambda x: x[1])
+
+        if max_area[1] > 0.75 * (out_h * out_w):
+            x, y, w, h = max_area[0]
+            out = out[y : y + h, x : x + w]
 
     return out
 
