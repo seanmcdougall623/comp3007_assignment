@@ -14,9 +14,7 @@ except ImportError:
 
 def get_rb_dataset():
     rf = Roboflow(api_key=os.environ["ROBOFLOW_SECRET"])
-    project = rf.workspace("sean-mcdougall").project(
-        "bp-therm-identification"
-    )
+    project = rf.workspace("sean-mcdougall").project("bp-therm-identification")
     project.version(7).download(
         "yolov8-obb", location="./datasets/task1", overwrite=True
     )
@@ -44,7 +42,7 @@ def generate_digit_data():
 
 def load_datasets():
     load_dotenv()
-    # get_rb_dataset()
+    get_rb_dataset()
     generate_digit_data()
 
 

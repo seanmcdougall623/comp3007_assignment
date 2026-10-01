@@ -33,9 +33,7 @@ def get_digit_num(img_path, loaded=False):
 # @returns list of 2 digits (val, x, y, w, h)
 def get_nearest_therm_digits(img):
 
-    ref_cnt, third_img = extract_therm_digits(
-        img, area_threshold_scale=50, draw=False
-    )
+    ref_cnt, third_img = extract_therm_digits(img, area_threshold_scale=50, draw=False)
 
     # check to see if any numbers are negative (small horizontal feature)
     neg = check_negative(third_img, draw=False)
@@ -112,14 +110,12 @@ def get_therm_reading(img, loaded=False):
     digits = get_nearest_therm_digits(img)
 
     # don't need x values just y value and digit value
-    (d1, _, y1, _, _) = digits[0]
-    (d2, _, y2, _, h2) = digits[1]
+    d1, _, y1, _, _ = digits[0]
+    d2, _, y2, _, h2 = digits[1]
 
     # sanity check in case misclassification
     if d1 < d2 or abs(d1 - d2) != 1:
-        raise ValueError(
-            f"Classification error! Received readings of {d1} and {d2}"
-        )
+        raise ValueError(f"Classification error! Received readings of {d1} and {d2}")
     else:
         print(f"Received readings of {d1} and {d2}")
     # calculate px spacing
@@ -177,14 +173,10 @@ def run_task3(image_path, config):
                         ".png",
                     ]:
                         digit = get_digit_num(file)
-                        output_path = (
-                            f"output/task3/{folder.name}/{file.stem}.txt"
-                        )
+                        output_path = f"output/task3/{folder.name}/{file.stem}.txt"
                         save_output(output_path, digit, output_type="txt")
                     else:
-                        print(
-                            f"Skipping {file.name}, not a valid image file."
-                        )
+                        print(f"Skipping {file.name}, not a valid image file.")
             elif folder.name.startswith("thermo"):
                 for file in folder.iterdir():
                     if file.is_file() and file.suffix in [
@@ -193,14 +185,10 @@ def run_task3(image_path, config):
                         ".png",
                     ]:
                         reading = get_therm_reading(file)
-                        output_path = (
-                            f"output/task3/{folder.name}/{file.stem}.txt"
-                        )
+                        output_path = f"output/task3/{folder.name}/{file.stem}.txt"
                         save_output(output_path, reading, output_type="txt")
                     else:
-                        print(
-                            f"Skipping {file.name}, not a valid image file."
-                        )
+                        print(f"Skipping {file.name}, not a valid image file.")
             else:
                 print(f"Skipping {folder.name}, not a valid image folder.")
         else:
