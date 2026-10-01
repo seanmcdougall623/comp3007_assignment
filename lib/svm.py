@@ -1,14 +1,12 @@
 import os
 from pathlib import Path
 
-import cv2
-import numpy as np
+from datasets import augment_img
 
-# can be calledfrom both task3.py and here, so handle import errors
-try:
-    from utils import resize
-except ImportError:
-    from lib.utils import resize
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 root_dir = Path(os.path.dirname(__file__))
 
@@ -80,6 +78,90 @@ def train_svm(
     model.save(model_dir)
 
 
+# calculate training accuracy
+def validate_svm(
+    model_dir,
+    test_data,
+    test_labels,
+    size,
+    svm_matrix_name="svm_confusion_matrix.png",
+):
+    test_data = np.reshape(test_data, (test_data.shape[0], size))
+    model = cv2.ml.SVM_load(model_dir)
+    _, pred = model.predict(test_data)
+
+    # reshape pred to 1d array
+    pred = pred.reshape(-1).astype(int)
+
+    # calc accuracy
+    print(f"Accuracy: {np.mean(pred == test_labels) * 100}%")
+
+    # Calculate confusion matrix
+    cm = confusion_matrix(test_labels, pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot()
+    plt.title("SVM Confusion Matrix")
+
+    plt.savefig(svm_matrix_name)
+
+
+def validate_with_gen_data(
+    img_dir,
+    model_dir,
+    size=(64, 64),
+    svm_matrix_name="svm_confusion_matrix.png",
+):
+    # augment training data with 5 imgs
+    img_dir = root_dir / "lcd_digits"
+    model_dir = root_dir / "../models/bp_svm.xml"
+
+    validate_imgs = []
+    validate_labels = []
+
+    for img in sorted(img_dir.iterdir()):
+        if img.is_file() and img.suffix.lower() in [".jpg", ".jpeg", ".png"]:
+            augmented_imgs = augment_img(
+                img,
+                multiplier=5,
+                scale=(0.8, 1.0),
+                skew=(-0.1, 0.1),
+            )
+            for a_img in augmented_imgs:
+                digit = load_image(a_img, size=size, loaded=True)
+                validate_imgs.append(digit)
+                validate_labels.append(int(img.stem))
+
+    validate_svm(
+        model_dir,
+        np.asarray(validate_imgs, dtype=np.float32),
+        np.asarray(validate_labels, dtype=np.int32),
+        size[0] * size[1],
+        svm_matrix_name=svm_matrix_name,
+    )
+
+
+def validate_bp():
+    img_dir = root_dir / "lcd_digits"
+    model_dir = root_dir / "../models/bp_svm.xml"
+    validate_with_gen_data(
+        img_dir,
+        model_dir,
+        size=(64, 64),
+        svm_matrix_name="bp_svm_confusion_matrix.png",
+    )
+
+
+def validate_therm():
+    img_dir = root_dir / "therm_digits"
+    model_dir = root_dir / "../models/therm_svm.xml"
+    validate_with_gen_data(
+        img_dir,
+        model_dir,
+        size=(64, 64),
+        svm_matrix_name="therm_svm_confusion_matrix.png",
+    )
+
+
 def train_bp():
     img_dir = root_dir / "../datasets/task3/lcd"
     model_dir = root_dir / "../models/bp_svm.xml"
@@ -140,9 +222,11 @@ def test_therm_digit(img_path, loaded=False):
 
 
 if __name__ == "__main__":
-    train_bp()
-    train_therm()
-    bp = test_bp_digit(os.getcwd() + "/output/task2/d2.png")
-    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/4.png")
-    print(bp)
-    print(therm)
+    # train_bp()
+    # train_therm()
+    validate_bp()
+    validate_therm()
+    # bp = test_bp_digit(os.getcwd() + "/output/task2/d2.png")
+    # therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/4.png")
+    # print(bp)
+    # print(therm)
