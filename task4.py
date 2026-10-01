@@ -110,4 +110,4 @@ def run_task4(image_path, config):
 
 # debug purposes
 if __name__ == "__main__":
-    run_task4("data/task1/extended", None)
+    run_task4("data/task1", None)

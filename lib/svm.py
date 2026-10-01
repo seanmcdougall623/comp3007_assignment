@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
 
-from datasets import augment_img
+try:
+    from augment import augment_img
+except ImportError:
+    from lib.augment import augment_img
 
 import cv2
 import matplotlib.pyplot as plt
@@ -122,7 +125,7 @@ def validate_with_gen_data(
         if img.is_file() and img.suffix.lower() in [".jpg", ".jpeg", ".png"]:
             augmented_imgs = augment_img(
                 img,
-                multiplier=5,
+                multiplier=10,
                 scale=(0.8, 1.0),
                 skew=(-0.1, 0.1),
             )
@@ -226,7 +229,7 @@ if __name__ == "__main__":
     # train_therm()
     validate_bp()
     validate_therm()
-    # bp = test_bp_digit(os.getcwd() + "/output/task2/d2.png")
-    # therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/4.png")
-    # print(bp)
-    # print(therm)
+    bp = test_bp_digit(os.getcwd() + "/output/task2/d2.jpg")
+    therm = test_therm_digit(os.getcwd() + "/lib/therm_digits/4.png")
+    print(bp)
+    print(therm)

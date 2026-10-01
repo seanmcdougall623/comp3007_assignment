@@ -146,7 +146,7 @@ def get_therm_reading(img, loaded=False):
 
     floored = math.floor(temp_reading)
 
-    return floored - 1 if floored > d1 * 10 else floored
+    return floored - 1 if floored > d2 * 10 else floored
 
 
 def save_output(output_path, content, output_type="txt"):

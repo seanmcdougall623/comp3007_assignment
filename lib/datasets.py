@@ -2,10 +2,14 @@ import os
 import shutil
 from pathlib import Path
 
-import cv2
-import numpy as np
 from roboflow import Roboflow
-from utils import load_dotenv
+
+try:
+    from augment import augment_imgs
+    from utils import load_dotenv
+except ImportError:
+    from lib.augment import augment_imgs
+    from lib.utils import load_dotenv
 
 
 def get_rb_dataset():
@@ -16,93 +20,6 @@ def get_rb_dataset():
     project.version(7).download(
         "yolov8-obb", location="./datasets/task1", overwrite=True
     )
-
-
-# returns n number of augmented images for given img
-# performs random rotation, scaling, and translation
-def augment_img(
-    img_path, multiplier=5, rot=(-15, 15), scale=None, trans=None, skew=None
-):
-    img = cv2.imread(img_path)
-    h, w = img.shape[:2]
-
-    out_img = np.empty((multiplier, h, w, 3), dtype=np.uint8)
-
-    for i in range(multiplier):
-        # random rot, scale, trans
-        angle = 0
-        scaled = 1.0
-        tx = 0
-        ty = 0
-        sx = 1
-        sy = 1
-        if rot:
-            angle = np.random.uniform(rot[0], rot[1])
-        if scale:
-            scaled = np.random.uniform(scale[0], scale[1])
-        if trans:
-            tx = np.random.uniform(trans[0], trans[1])
-            ty = np.random.uniform(trans[0], trans[1])
-
-        M_rot_s = cv2.getRotationMatrix2D((w / 2, h / 2), angle, scaled)
-
-        M_rot_s[0, 2] += tx
-        M_rot_s[1, 2] += ty
-
-        augmented_img = cv2.warpAffine(
-            img,
-            M_rot_s,
-            (w, h),
-            flags=cv2.INTER_LINEAR,
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=(0, 0, 0),
-        )
-
-        if skew:
-            sx = np.random.uniform(skew[0], skew[1])
-            sy = np.random.uniform(skew[0], skew[1])
-
-            M = np.array([[1, sx, 0], [sy, 1, 0]], dtype=np.float32)
-
-            augmented_img = cv2.warpAffine(
-                augmented_img,
-                M,
-                (w, h),
-                flags=cv2.INTER_LINEAR,
-                borderMode=cv2.BORDER_CONSTANT,
-                borderValue=(0, 0, 0),
-            )
-
-        out_img[i] = augmented_img
-
-    return out_img
-
-
-def augment_imgs(img_dir, save_dir, multiplier=5):
-    img_dir = Path(img_dir)
-    save_dir = Path(save_dir)
-
-    if not save_dir.exists():
-        save_dir.mkdir(parents=True)
-
-    for img_path in img_dir.iterdir():
-
-        folder_name = img_path.name.split(".")[0]
-        out_path = save_dir / folder_name
-
-        if not out_path.exists():
-            out_path.mkdir(parents=True)
-
-        augmented_imgs = augment_img(
-            img_path,
-            multiplier=multiplier,
-            scale=(0.8, 1.0),
-            skew=(-0.1, 0.1),
-        )
-        # copy in original img
-        shutil.copy(img_path, out_path / f"{folder_name}_0.png")
-        for j, aug_img in enumerate(augmented_imgs):
-            cv2.imwrite(out_path / f"{folder_name}_{j+1}.png", aug_img)
 
 
 # used to augment dataset for task3 so we can train da svm better
@@ -119,7 +36,7 @@ def generate_digit_data():
     else:
         out_dir.mkdir(parents=True)
 
-    multiplier = 10
+    multiplier = 15
 
     augment_imgs(lcd_digits, out_dir / "lcd", multiplier=multiplier)
     augment_imgs(therm_digits, out_dir / "therm", multiplier=multiplier)
