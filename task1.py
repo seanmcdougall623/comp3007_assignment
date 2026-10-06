@@ -45,7 +45,7 @@ def identify_object(img_path, loaded=False):
     else:
         img = img_path
 
-    model = YOLO("models/bp_therm_ident.pt")
+    model = YOLO(Path(__file__).parent / "models/bp_therm_ident.pt")
 
     results = model.predict(img)
 

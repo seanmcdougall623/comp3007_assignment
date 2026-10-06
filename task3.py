@@ -39,7 +39,8 @@ def get_nearest_therm_digits(img):
 
     # check to see if any numbers are negative (small horizontal feature)
     neg = check_negative(third_img, draw=False)
-    print("Negative sign detected!")
+    if neg:
+        print("Negative sign detected!")
 
     # can sometimes falsely include the shadow from the thermometer
     # just remove it

@@ -90,7 +90,10 @@ def run_task4(image_path, config):
                 # next to no clue why
                 # but thermometer extraction only works when it reads it in itself
                 # reading from the buffer doesn't seem to work as well
-                temp_out = f"output/task4/{file.stem}_temp.jpg"
+                temp_out = (
+                    Path(__file__).parent
+                    / f"output/task4/{file.stem}_temp.jpg"
+                )
                 cv2.imwrite(temp_out, extracted_img)
                 box, img = find_thermo_section(temp_out)
                 t_out = extract_thermo_section(img, box)
