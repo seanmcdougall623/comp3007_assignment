@@ -126,7 +126,9 @@ def extract_item(img, bb, item_type):
         edges = cv2.Canny(gray, 50, 150)
         cv2.dilate(edges, (7, 7), iterations=3)
 
-        cnt = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+        cnt = cv2.findContours(
+            edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )[0]
 
         ref_cnt = []
 
@@ -161,7 +163,7 @@ def run_task1(image_path, config):
             num = file.stem.split("img")[-1]
             item = out[0]  # select first item as per task sheet
             out_img = extract_item(str(file), item[2], item[0])
-            f_name = ("lcd" if item[0] == "bp" else "therm") + num
+            f_name = ("lcd" if item[0] == "bp" else "thermo") + num
             output_path = f"output/task1/{f_name}.jpg"
             save_output(output_path, out_img, output_type="image")
         else:

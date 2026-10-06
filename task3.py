@@ -180,7 +180,9 @@ def run_task3(image_path, config):
                         output_path = (
                             f"output/task3/{folder.name}/{file.stem}.txt"
                         )
-                        save_output(output_path, digit, output_type="txt")
+                        save_output(
+                            output_path, str(digit), output_type="txt"
+                        )
                     else:
                         print(
                             f"Skipping {file.name}, not a valid image file."
@@ -196,7 +198,9 @@ def run_task3(image_path, config):
                         output_path = (
                             f"output/task3/{folder.name}/{file.stem}.txt"
                         )
-                        save_output(output_path, reading, output_type="txt")
+                        save_output(
+                            output_path, str(reading), output_type="txt"
+                        )
                     else:
                         print(
                             f"Skipping {file.name}, not a valid image file."
@@ -210,13 +214,16 @@ def run_task3(image_path, config):
 # debug purposes
 if __name__ == "__main__":
     # !! uncomment for BP !!
-    img_path = "output/task2/"
-    for img in sorted(Path(img_path).iterdir()):
-        if img.name == "t.jpg":
-            continue
-        print(get_digit_num(img))
+    # img_path = "output/task2/"
+    # for img in sorted(Path(img_path).iterdir()):
+    #     if img.name == "t.jpg":
+    #         continue
+    #     print(get_digit_num(img))
 
     # !! uncomment for therm !!
-    img_path = "output/task2/"
-    read = get_therm_reading(img_path + "t.jpg")
-    print(read)
+    # img_path = "output/task2/"
+    # read = get_therm_reading(img_path + "t.jpg")
+    # print(read)
+
+    # !! uncomment for task 3 !!
+    run_task3("output/task2", None)
