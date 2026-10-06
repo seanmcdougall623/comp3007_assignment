@@ -45,6 +45,17 @@ def train_bp_therm():
     train_model("/datasets/task1/data.yaml", "bp_therm_ident.pt")
 
 
+def validate_model():
+    model = YOLO("models/bp_therm_ident.pt")
+    results = model.val(
+        data=os.getcwd() + "/datasets/task1/data.yaml",
+        imgsz=640,
+        batch=16,
+        device=0,
+    )
+    print(results)
+
+
 def train_digit():
     train_model(
         "/datasets/task3",
@@ -58,3 +69,4 @@ def train_digit():
 
 if __name__ == "__main__":
     train_bp_therm()
+    # validate_model()
