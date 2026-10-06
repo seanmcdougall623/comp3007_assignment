@@ -125,6 +125,10 @@ def get_therm_reading(img, loaded=False):
     # loop through in case we extract the mercury a bit optimistically and place the temperature too high
     temp_reading = 99
     start_reg = 130
+
+    # avoid divide by 0 error
+    if temp_reading == 0:
+        temp_reading = 0.01
     while d1 - (temp_reading / 10) < 0 or (temp_reading / 10) - d2 > 1:
         _, merc_y, _, _ = extract_red(img, a_filt=start_reg)
 

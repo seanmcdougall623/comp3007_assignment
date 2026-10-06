@@ -58,18 +58,14 @@ def run_task4(image_path, config):
                 continue
             item = out[0]
 
-            print(
-                f"Identified {item[0]} in {file.name} with confidence {item[1]:.2f}"
-            )
+            print(f"Identified {item[0]} in {file.name} with confidence {item[1]:.2f}")
 
             extracted_img = extract_item(file, item[2], item[0])
 
             txt_out = ""
 
             if item[0] == "bp":
-                ref_cnt, img = find_lcd_digits(
-                    extracted_img, loaded=True, draw=False
-                )
+                ref_cnt, img = find_lcd_digits(extracted_img, loaded=True, draw=False)
                 d_out = extract_lcd_digits(img, ref_cnt)
 
                 readings = []
@@ -110,4 +106,4 @@ def run_task4(image_path, config):
 
 # debug purposes
 if __name__ == "__main__":
-    run_task4("data/task1", None)
+    run_task4("data/task1/extended", None)
