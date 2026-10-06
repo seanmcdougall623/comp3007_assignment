@@ -39,6 +39,7 @@ def get_nearest_therm_digits(img):
 
     # check to see if any numbers are negative (small horizontal feature)
     neg = check_negative(third_img, draw=False)
+    print(f"Negative sign detected!")
 
     # can sometimes falsely include the shadow from the thermometer
     # just remove it
@@ -78,12 +79,18 @@ def get_nearest_therm_digits(img):
         elif output[2][0] == 0:
             output.remove(output[2])
 
+    # if we have a negative sign, fix digits
+    if neg:
+        for digit in output:
+            if digit[0] > 0:
+                digit[0] = -digit[0]
+
     # sanity check in case misclassification
     # if we did misclassify just take the highest digit as ground truth bcz it seems to be more acccurate in testing
     if len(output) == 2:
         d1 = output[0][0]
         d2 = output[1][0]
-        if abs(d1 - d2) != 1 or d1 < d2:
+        if d1 - d2 != 1 or d1 < d2:
             # use closest positive digit to 0 as probs the correct one
             truth = min(x for x in [d1, d2] if x > 0)
             print(
@@ -94,12 +101,6 @@ def get_nearest_therm_digits(img):
                 output[0][0] = truth + 1
             else:
                 output[1][0] = truth - 1
-
-    # if we have a negative sign, fix digits
-    if neg:
-        for digit in output:
-            if digit[0] > 0:
-                digit[0] = -digit[0]
 
     return output
 
@@ -129,7 +130,9 @@ def get_therm_reading(img, loaded=False):
     # loop through in case we extract the mercury a bit optimistically and place the temperature too high
     temp_reading = 99
     start_reg = 130
-    while d1 - (temp_reading / 10) < 0 or (temp_reading / 10) - d2 > 1:
+    while (
+        abs(d1) - (temp_reading / 10) < 0 or (temp_reading / 10) - abs(d2) > 1
+    ):
         _, merc_y, _, _ = extract_red(img, a_filt=start_reg)
 
         # calculate mercury reading
@@ -146,7 +149,7 @@ def get_therm_reading(img, loaded=False):
 
     floored = math.floor(temp_reading)
 
-    return floored - 1 if floored > d2 * 10 else floored
+    return floored - 1 if floored > abs(d2) * 10 else floored
 
 
 def save_output(output_path, content, output_type="txt"):
@@ -221,7 +224,7 @@ if __name__ == "__main__":
     #     print(get_digit_num(img))
 
     # !! uncomment for therm !!
-    # img_path = "output/task2/"
+    # img_path = "./"
     # read = get_therm_reading(img_path + "t.jpg")
     # print(read)
 
