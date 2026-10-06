@@ -39,7 +39,7 @@ def get_nearest_therm_digits(img):
 
     # check to see if any numbers are negative (small horizontal feature)
     neg = check_negative(third_img, draw=False)
-    print(f"Negative sign detected!")
+    print("Negative sign detected!")
 
     # can sometimes falsely include the shadow from the thermometer
     # just remove it
@@ -92,7 +92,11 @@ def get_nearest_therm_digits(img):
         d2 = output[1][0]
         if d1 - d2 != 1 or d1 < d2:
             # use closest positive digit to 0 as probs the correct one
-            truth = min(x for x in [d1, d2] if x > 0)
+            # in case both are negative / 0 just use highest
+            try:
+                truth = min(x for x in [d1, d2] if x > 0)
+            except ValueError:
+                truth = max(d1, d2)
             print(
                 f"Misclassficiation detected! Received {d1} and {d2}. Using {truth} as ground truth"
             )
