@@ -171,7 +171,9 @@ def run_task2(image_path, config):
             elif f_name[:3] == "the":
                 box, img = find_thermo_section(file)
                 out = extract_thermo_section(img, box)
-                save_output("output/task2/{f_name}/t.jpg", out, output_type="image")
+                save_output(
+                    f"output/task2/{f_name}/t.jpg", out, output_type="image"
+                )
 
         else:
             print(f"Skipping {file.name}, not a valid image file.")
@@ -180,8 +182,12 @@ def run_task2(image_path, config):
 # debug purposes
 if __name__ == "__main__":
     # !! uncomment for BP !!
-    ref_cnt, img = find_lcd_digits("output/task1/lcd5.jpg", draw=False)
-    extract_lcd_digits(img, ref_cnt, "output/task2/")
+    # ref_cnt, img = find_lcd_digits("output/task1/lcd5.jpg", draw=False)
+    # extract_lcd_digits(img, ref_cnt, "output/task2/")
+
     # !! uncomment for therm !!
-    # box, img = find_thermo_section("output/task1/therm6.jpg")
+    # box, img = find_thermo_section("output/task1/therm1.jpg")
     # extract_thermo_section(img, box, "output/task2/")
+
+    # !! uncomment for task 2 !!
+    run_task2("output/task1", None)

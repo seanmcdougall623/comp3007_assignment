@@ -21,9 +21,13 @@ def order_corners(corners):
 
 
 # convert and filter out noise
-def preprocess_image(img, resize=True, resize_dimensions=(600, 480), gauss=True):
+def preprocess_image(
+    img, resize=True, resize_dimensions=(600, 480), gauss=True
+):
     if resize:
-        resized = cv2.resize(img, resize_dimensions, interpolation=cv2.INTER_LINEAR)
+        resized = cv2.resize(
+            img, resize_dimensions, interpolation=cv2.INTER_LINEAR
+        )
     else:
         resized = img
     grayed = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
@@ -65,7 +69,9 @@ def extract_digits(
     kernel = np.ones(kernel_size, np.uint8)
     img_dil = cv2.dilate(img_edges, kernel, iterations=1)
 
-    contours, _ = cv2.findContours(img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        img_dil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     img_w, img_h = img.shape[1], img.shape[0]
 
@@ -99,7 +105,9 @@ def extract_digits(
     # idk probably not efficient but shld be fine
     # only sort if we aren't drawing cause otherwise this method breaks and drawing is really just an diagnostic tool anyway
     if not draw:
-        ref_cnt = sorted(ref_cnt, key=lambda r: math.sqrt(r[0] ** 2 + r[1] ** 2))
+        ref_cnt = sorted(
+            ref_cnt, key=lambda r: math.sqrt(r[0] ** 2 + r[1] ** 2)
+        )
 
     return ref_cnt
 
@@ -135,14 +143,18 @@ def check_negative(img, draw=False):
     img = cv2.GaussianBlur(img, (5, 5), 0)
     canny = cv2.Canny(img, 50, 150)
 
-    cnt = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+    _, img_w = img.shape[:2]
+
+    cnt = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[
+        0
+    ]
 
     ref_cnt = []
 
     for c in cnt:
         x, y, w, h = cv2.boundingRect(c)
         area = w * h
-        if area > 100 and w > 10 * h:
+        if area > 100 and w > 2 * h:
             if draw:
                 ref_cnt.append(
                     np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
@@ -156,8 +168,13 @@ def check_negative(img, draw=False):
         cv2.imshow("Negative Sign", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-    return ref_cnt == 1
+    else:
+        # return if contours near the left side
+        if ref_cnt:
+            for cnt in ref_cnt:
+                x, y, w, h = cnt
+                if x < 0.25 * img_w:
+                    return True
 
 
 # extracts coordinates of largest red region in image
@@ -291,7 +308,9 @@ def get_digit_num_manual(digit):
 
     # number 1 digit will only have 2 segments - computation will fail
     # just count number of countours and if we only have two its probs a 1
-    num_cnts, _ = cv2.findContours(digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    num_cnts, _ = cv2.findContours(
+        digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     if len(num_cnts) == 2:
         return 1
