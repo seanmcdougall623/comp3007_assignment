@@ -166,13 +166,18 @@ def run_task2(image_path, config):
                 ref_cnt, img = find_lcd_digits(file, draw=False)
                 out = extract_lcd_digits(img, ref_cnt)
                 for i, digit_img in enumerate(out):
-                    output_path = f"output/task2/{f_name}/d{i + 1}.jpg"
+                    output_path = (
+                        Path(__file__).parent
+                        / f"output/task2/{f_name}/d{i + 1}.jpg"
+                    )
                     save_output(output_path, digit_img, output_type="image")
             elif f_name[:3] == "the":
                 box, img = find_thermo_section(file)
                 out = extract_thermo_section(img, box)
                 save_output(
-                    f"output/task2/{f_name}/t.jpg", out, output_type="image"
+                    Path(__file__).parent / f"output/task2/{f_name}/t.jpg",
+                    out,
+                    output_type="image",
                 )
 
         else:
@@ -190,4 +195,4 @@ if __name__ == "__main__":
     # extract_thermo_section(img, box, "output/task2/")
 
     # !! uncomment for task 2 !!
-    run_task2("output/task1", None)
+    run_task2("data/task2", None)

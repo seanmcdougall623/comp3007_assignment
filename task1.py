@@ -164,7 +164,7 @@ def run_task1(image_path, config):
             item = out[0]  # select first item as per task sheet
             out_img = extract_item(str(file), item[2], item[0])
             f_name = ("lcd" if item[0] == "bp" else "thermo") + num
-            output_path = f"output/task1/{f_name}.jpg"
+            output_path = Path(__file__).parent / f"output/task1/{f_name}.jpg"
             save_output(output_path, out_img, output_type="image")
         else:
             print(f"Skipping {file.name}, not a valid image file.")

@@ -82,7 +82,9 @@ def run_task4(image_path, config):
                         f"Warning: Expected 7 readings, got {len(readings)} for {file.name}."
                     )
 
-                output_path = f"output/task4/{file.stem}.txt"
+                output_path = (
+                    Path(__file__).parent / f"output/task4/{file.stem}.txt"
+                )
                 txt_out = f"bpm {''.join(readings[0:3])}, {''.join(readings[3:5])}, {''.join(readings[5:7])}"
                 save_output(output_path, txt_out, output_type="txt")
 
@@ -97,7 +99,9 @@ def run_task4(image_path, config):
                 os.remove(temp_out)
                 reading = get_therm_reading(t_out, loaded=True)
 
-                output_path = f"output/task4/{file.stem}.txt"
+                output_path = (
+                    Path(__file__).parent / f"output/task4/{file.stem}.txt"
+                )
                 txt_out = f"temp {reading}"
 
                 save_output(output_path, txt_out, output_type="txt")
@@ -110,4 +114,4 @@ def run_task4(image_path, config):
 
 # debug purposes
 if __name__ == "__main__":
-    run_task4("data/task1/extended", None)
+    run_task4("data/task1", None)
