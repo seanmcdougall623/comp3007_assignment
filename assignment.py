@@ -17,6 +17,10 @@
 import os
 import sys
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
+
 # Importing the individual tasks
 from task1 import run_task1
 from task2 import run_task2
@@ -42,7 +46,9 @@ def read_config(config_path):
 def print_usage():
     print("Usage: assignment.py <task> <image_path> [config_path]")
     print("Example:")
-    print("  python assignment.py task1 /mnt/data/comp3007/assignment2024/task1")
+    print(
+        "  python assignment.py task1 /mnt/data/comp3007/assignment2024/task1"
+    )
     print(
         "  Optional config file path (default: config.txt) in the same directory as assignment.py"
     )
